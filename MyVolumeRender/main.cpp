@@ -67,7 +67,7 @@ void init()
     g_texHeight = g_winHeight;
     initVBO();
     initShader();
-    g_tffTexObj = initTFF1DTex("TF1D\\tooth-1.TF1D");
+    g_tffTexObj = initTFF1DTex("TF1D\\tooth-4.TF1D");
     g_bfTexObj = initFace2DTex(g_texWidth, g_texHeight);
     g_volTexObj = initVol3DTex("tooth_103x94x161_uint8.raw", 103, 94, 161);
     GL_ERROR();
@@ -510,13 +510,13 @@ void rcSetUinforms()
 void initShader()
 {
 // vertex shader object for first pass
-    g_bfVertHandle = initShaderObj("shader/backface.vert", GL_VERTEX_SHADER);
+    g_bfVertHandle = initShaderObj("shader/backface.vs", GL_VERTEX_SHADER);
 // fragment shader object for first pass
-    g_bfFragHandle = initShaderObj("shader/backface.frag", GL_FRAGMENT_SHADER);
+    g_bfFragHandle = initShaderObj("shader/backface.fs", GL_FRAGMENT_SHADER);
 // vertex shader object for second pass
-    g_rcVertHandle = initShaderObj("shader/raycasting.vert", GL_VERTEX_SHADER);
+    g_rcVertHandle = initShaderObj("shader/raycasting.vs", GL_VERTEX_SHADER);
 // fragment shader object for second pass
-    g_rcFragHandle = initShaderObj("shader/raycasting.frag", GL_FRAGMENT_SHADER);
+    g_rcFragHandle = initShaderObj("shader/raycasting.fs", GL_FRAGMENT_SHADER);
 // create the shader program , use it in an appropriate time
     g_programHandle = createShaderPgm();
 // 获得由着色器编译器分配的索引(可选)

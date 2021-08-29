@@ -23,16 +23,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\backface.frag">
+    <None Include="shader\backface.fs">
       <Filter>Shader</Filter>
     </None>
-    <None Include="shader\backface.vert">
+    <None Include="shader\backface.vs">
       <Filter>Shader</Filter>
     </None>
-    <None Include="shader\raycasting.frag">
+    <None Include="shader\raycasting.fs">
       <Filter>Shader</Filter>
     </None>
-    <None Include="shader\raycasting.vert">
+    <None Include="shader\raycasting.vs">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>
