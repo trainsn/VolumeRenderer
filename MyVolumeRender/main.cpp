@@ -41,8 +41,7 @@ GLuint g_bfFragHandle;
 float g_stepSize = 0.001f;
 
 
-int checkForOpenGLError(const char* file, int line)
-{
+int checkForOpenGLError(const char* file, int line){
     // return 1 if an OpenGL error occured, 0 otherwise.
     GLenum glErr;
     int retCode = 0;
@@ -66,31 +65,29 @@ GLuint initTFF1DTex(const char* filename);
 GLuint initFace2DTex(GLuint texWidth, GLuint texHeight);
 GLuint initVol3DTex(const char* filename, GLuint width, GLuint height, GLuint depth);
 void render(GLenum cullFace);
-void init()
-{
+void init(){
     g_texWidth = g_winWidth;
     g_texHeight = g_winHeight;
     initVBO();
     initShader();
-    g_tffTexObj = initTFF1DTex("../TF1D/head-1.TF1D");
+    g_tffTexObj = initTFF1DTex("../TF1D/nyx-1.TF1D");
     g_bfTexObj = initFace2DTex(g_texWidth, g_texHeight);
-    g_volTexObj = initVol3DTex("head256.raw", 256, 256, 225);
+    g_volTexObj = initVol3DTex("D:\\OSU\\Grade3\\Nyx\\00150density_upsample.raw", 256, 256, 256);
     GL_ERROR();
     initFrameBuffer(g_bfTexObj, g_texWidth, g_texHeight);
     GL_ERROR();
 }
 // init the vertex buffer object
-void initVBO()
-{
+void initVBO(){
     GLfloat vertices[24] = {
-	0.0, 0.0, 0.0,
-	0.0, 0.0, 1.0,
-	0.0, 1.0, 0.0,
-	0.0, 1.0, 1.0,
-	1.0, 0.0, 0.0,
-	1.0, 0.0, 1.0,
-	1.0, 1.0, 0.0,
-	1.0, 1.0, 1.0
+		0.0, 0.0, 0.0,
+		0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0,
+		0.0, 1.0, 1.0,
+		1.0, 0.0, 0.0,
+		1.0, 0.0, 1.0,
+		1.0, 1.0, 0.0,
+		1.0, 1.0, 1.0
     };
 
 // draw the six faces of the boundbox by drawwing triangles
@@ -102,18 +99,18 @@ void initVBO()
 // up: 2 3 7 6
 // down: 1 0 4 5
     GLuint indices[36] = {
-	1,5,7,
-	7,3,1,
-	0,2,6,
-    6,4,0,
-	0,1,3,
-	3,2,0,
-	7,5,4,
-	4,6,7,
-	2,3,7,
-	7,6,2,
-	1,0,4,
-	4,5,1
+		1,5,7,
+		7,3,1,
+		0,2,6,
+		6,4,0,
+		0,1,3,
+		3,2,0,
+		7,5,4,
+		4,6,7,
+		2,3,7,
+		7,6,2,
+		1,0,4,
+		4,5,1
     };
     GLuint gbo[2];
     
@@ -121,10 +118,10 @@ void initVBO()
     GLuint vertexdat = gbo[0];
     GLuint veridxdat = gbo[1];
     glBindBuffer(GL_ARRAY_BUFFER, vertexdat);
-    glBufferData(GL_ARRAY_BUFFER, 24*sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
     // used in glDrawElement()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, veridxdat);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36*sizeof(GLuint), indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36 * sizeof(GLuint), indices, GL_STATIC_DRAW);
 
     GLuint vao;
     glGenVertexArrays(1, &vao);
@@ -264,17 +261,17 @@ GLuint initTFF1DTex(const char* filename)
 	float thresholdL, thresholdU;
 	fscanf(fp, "%d %f %f\n", &keyNum, &thresholdL, &thresholdU);
 
-	float *intensity = new float[keyNum];
-	int *rl = new int[keyNum],
-		*gl = new int[keyNum],
-		*bl = new int[keyNum],
-		*al = new int[keyNum],
-		*rr = new int[keyNum],
-		*gr = new int[keyNum],
-		*br = new int[keyNum],
-		*ar = new int[keyNum];
+	float *intensity = new float[keyNum],
+		*rl = new float[keyNum],
+		*gl = new float[keyNum],
+		*bl = new float[keyNum],
+		*al = new float[keyNum],
+		*rr = new float[keyNum],
+		*gr = new float[keyNum],
+		*br = new float[keyNum],
+		*ar = new float[keyNum];
 	for (int i = 0; i < keyNum; i++) {
-		fscanf(fp, "%f %d %d %d %d %d %d %d %d", &intensity[i],
+		fscanf(fp, "%f %f %f %f %f %f %f %f %f", &intensity[i],
 			&rl[i], &gl[i], &bl[i], &al[i], &rr[i], &gr[i], &br[i], &ar[i]);
 	}
 
@@ -299,23 +296,23 @@ GLuint initTFF1DTex(const char* filename)
 		while (keyIterator < keyNum && value > intensity[keyIterator])
 			keyIterator++;
 		if (keyIterator == 0) {
-			r = rl[keyIterator] / 255.f;
-			g = gl[keyIterator] / 255.f;
-			b = bl[keyIterator] / 255.f;
-			a = al[keyIterator] / 255.f;
+			r = rl[keyIterator];
+			g = gl[keyIterator];
+			b = bl[keyIterator];
+			a = al[keyIterator];
 		}
 		else if (keyIterator == keyNum) {
-			r = rr[keyIterator - 1] / 255.f;
-			g = gr[keyIterator - 1] / 255.f;
-			b = br[keyIterator - 1] / 255.f;
-			a = ar[keyIterator - 1] / 255.f;
+			r = rr[keyIterator - 1];
+			g = gr[keyIterator - 1];
+			b = br[keyIterator - 1];
+			a = ar[keyIterator - 1];
 		}
 		else {
 			float fraction = (value - intensity[keyIterator - 1]) / (intensity[keyIterator] - intensity[keyIterator - 1]);
-			r = rr[keyIterator - 1] / 255.f + (rl[keyIterator] - rr[keyIterator - 1]) / 255.f * fraction;
-			g = gr[keyIterator - 1] / 255.f + (gl[keyIterator] - gr[keyIterator - 1]) / 255.f * fraction;
-			b = br[keyIterator - 1] / 255.f + (bl[keyIterator] - br[keyIterator - 1]) / 255.f * fraction;
-			a = ar[keyIterator - 1] / 255.f + (al[keyIterator] - ar[keyIterator - 1]) / 255.f * fraction;
+			r = rr[keyIterator - 1] + (rl[keyIterator] - rr[keyIterator - 1]) * fraction;
+			g = gr[keyIterator - 1] + (gl[keyIterator] - gr[keyIterator - 1]) * fraction;
+			b = br[keyIterator - 1] + (bl[keyIterator] - br[keyIterator - 1]) * fraction;
+			a = ar[keyIterator - 1] + (al[keyIterator] - ar[keyIterator - 1]) * fraction;
 		}
 
 		transferFunction[x * 4 + 0] = r;
@@ -352,9 +349,9 @@ GLuint initTFF1DTex(const char* filename)
 	delete[]transferFunction;
     return tff1DTex;
 }
+
 // init the 2D texture for render backface 'bf' stands for backface
-GLuint initFace2DTex(GLuint bfTexWidth, GLuint bfTexHeight)
-{
+GLuint initFace2DTex(GLuint bfTexWidth, GLuint bfTexHeight){
     GLuint backFace2DTex;
     glGenTextures(1, &backFace2DTex);
     glBindTexture(GL_TEXTURE_2D, backFace2DTex);
@@ -365,32 +362,37 @@ GLuint initFace2DTex(GLuint bfTexWidth, GLuint bfTexHeight)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, bfTexWidth, bfTexHeight, 0, GL_RGBA, GL_FLOAT, NULL);
     return backFace2DTex;
 }
+
 // init 3D texture to store the volume data used fo ray casting
-GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d)
-{
-    
+GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d){
     FILE *fp;
     size_t size = w * h * d;
-    GLubyte *data = new GLubyte[size];			  // 8bit
-    if (!(fp = fopen(filename, "rb")))
-    {
+    float *data = new float[size];
+    if (!(fp = fopen(filename, "rb"))){
         cout << "Error: opening .raw file failed" << endl;
         exit(EXIT_FAILURE);
     }
-    else
-    {
+	else{
         cout << "OK: open .raw file successed" << endl;
     }
-    if ( fread(data, sizeof(char), size, fp)!= size) 
-    {
+    if ( fread(data, sizeof(float), size, fp)!= size) {
         cout << "Error: read .raw file failed" << endl;
         exit(1);
     }
-    else
-    {
+    else{
         cout << "OK: read .raw file successed" << endl;
     }
     fclose(fp);
+
+	float data_min = 13.0f;
+	float data_max = 0.0f;
+	for (int i = 0; i < size; i++) {
+		if (data[i] < data_min)
+			data_min = data[i];
+		if (data[i] > data_max)
+			data_max = data[i];
+		data[i] /= 12.0f;
+	}
 
     glGenTextures(1, &g_volTexObj);
     // bind 3D texture target
@@ -402,7 +404,7 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d)
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
     // pixel transfer happens here from client to OpenGL server
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_INTENSITY, w, h, d, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RED, w, h, d, 0, GL_RED, GL_FLOAT, data);
 
     delete []data;
     cout << "volume texture created" << endl;
@@ -652,10 +654,10 @@ void display()
 void render(GLenum cullFace)
 {
     GL_ERROR();
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //  transform the box
-    glm::mat4 projection = glm::perspective(60.0f, (GLfloat)g_winWidth/g_winHeight, 0.1f, 400.f);
+    glm::mat4 projection = glm::perspective(60.0f, (GLfloat)g_winWidth/g_winHeight, 0.1f, 5.0f);
     glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f),
     				 glm::vec3(0.0f, 0.0f, 0.0f), 
     				 glm::vec3(0.0f, 1.0f, 0.0f));
