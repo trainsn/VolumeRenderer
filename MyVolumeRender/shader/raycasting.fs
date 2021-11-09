@@ -32,7 +32,7 @@ void main()
     float deltaDirLen = length(deltaDir);
     vec3 voxelCoord = EntryPoint;
     vec4 colorAcum = vec4(0.0); // The dest color
-    float alphaAcum = 0.0;                // The  dest alpha for blending
+    float alphaAcum = 0.0;     // The  dest alpha for blending
     /* 定义颜色查找的坐标 */
     float intensity;
     float lengthAcum = 0.0;
@@ -53,25 +53,23 @@ void main()
         // front-to-back integration
         if (colorSample.a > 0.0) {
             // accomodate for variable sampling rates (base interval defined by mod_compositing.frag)
-            colorSample.a = 1.0 - pow(1.0 - colorSample.a, StepSize*200.0f);
+            colorSample.a = 1.0 - pow(1.0 - colorSample.a, StepSize * 200.0f);
             colorAcum.rgb += (1.0 - colorAcum.a) * colorSample.rgb * colorSample.a;
             colorAcum.a += (1.0 - colorAcum.a) * colorSample.a;
         }
         voxelCoord += deltaDir;
         lengthAcum += deltaDirLen;
-        if (lengthAcum >= len )
-        {   
+        if (lengthAcum >= len){   
             colorAcum.rgb = colorAcum.rgb*colorAcum.a + (1 - colorAcum.a)*bgColor.rgb;      
             break;  // terminate if opacity > 1 or the ray is outside the volume    
         }   
-        else if (colorAcum.a > 1.0)
-        {
+        else if (colorAcum.a > 1.0){
             colorAcum.a = 1.0;
             break;
         }
     }
     FragColor = vec4(colorAcum.rgb, 1.0);
     // for test
-    // FragColor = vec4(EntryPoint, 1.0);
-    // FragColor = vec4(exitPoint, 1.0);
+    //FragColor = vec4(EntryPoint, 1.0);
+    //FragColor = vec4(exitPoint, 1.0);
 }

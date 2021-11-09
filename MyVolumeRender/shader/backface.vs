@@ -9,8 +9,7 @@ out vec3 Color;
 uniform mat4 MVP;
 
 
-void main()
-{
+void main(){
     Color = VerClr;
     gl_Position = MVP * vec4(VerPos, 1.0);
 }

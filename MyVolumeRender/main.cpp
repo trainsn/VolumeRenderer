@@ -24,15 +24,13 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-GLuint g_winWidth = 400;
-GLuint g_winHeight = 400;
+GLuint g_winWidth = 896;
+GLuint g_winHeight = 896;
 GLfloat g_angle = 0;
 GLuint g_frameBuffer;
 // transfer function
 GLuint g_tffTexObj;
 GLuint g_bfTexObj;
-GLuint g_texWidth;
-GLuint g_texHeight;
 GLuint g_volTexObj;
 GLuint g_rcVertHandle;
 GLuint g_rcFragHandle;
@@ -47,12 +45,11 @@ int checkForOpenGLError(const char* file, int line){
     int retCode = 0;
 
     glErr = glGetError();
-    while(glErr != GL_NO_ERROR)
-    {
-	cout << "glError in file " << file
-	     << "@line " << line << gluErrorString(glErr) << endl;
-	retCode = 1;
-	exit(EXIT_FAILURE);
+    while(glErr != GL_NO_ERROR){
+		cout << "glError in file " << file
+			 << "@line " << line << gluErrorString(glErr) << endl;
+		retCode = 1;
+		exit(EXIT_FAILURE);
     }
     return retCode;
 }
@@ -66,15 +63,13 @@ GLuint initFace2DTex(GLuint texWidth, GLuint texHeight);
 GLuint initVol3DTex(const char* filename, GLuint width, GLuint height, GLuint depth);
 void render(GLenum cullFace);
 void init(){
-    g_texWidth = g_winWidth;
-    g_texHeight = g_winHeight;
     initVBO();
     initShader();
     g_tffTexObj = initTFF1DTex("../TF1D/nyx-1.TF1D");
-    g_bfTexObj = initFace2DTex(g_texWidth, g_texHeight);
+    g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
     g_volTexObj = initVol3DTex("D:\\OSU\\Grade3\\Nyx\\00150density_upsample.raw", 256, 256, 256);
     GL_ERROR();
-    initFrameBuffer(g_bfTexObj, g_texWidth, g_texHeight);
+    initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
     GL_ERROR();
 }
 // init the vertex buffer object
@@ -411,8 +406,7 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d){
     return g_volTexObj;
 }
 
-void checkFramebufferStatus()
-{
+void checkFramebufferStatus(){
     GLenum complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (complete != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -421,8 +415,7 @@ void checkFramebufferStatus()
     }
 }
 // init the framebuffer, the only framebuffer used in this program
-void initFrameBuffer(GLuint texObj, GLuint texWidth, GLuint texHeight)
-{
+void initFrameBuffer(GLuint texObj, GLuint texWidth, GLuint texHeight){
     // create a depth buffer for our framebuffer
     GLuint depthBuffer;
     glGenRenderbuffers(1, &depthBuffer);
@@ -438,8 +431,7 @@ void initFrameBuffer(GLuint texObj, GLuint texWidth, GLuint texHeight)
     glEnable(GL_DEPTH_TEST);    
 }
 
-void rcSetUinforms()
-{
+void rcSetUinforms(){
     // setting uniforms such as
     // ScreenSize 
     // StepSize
@@ -447,75 +439,64 @@ void rcSetUinforms()
     // ExitPoints i.e. the backface, the backface hold the ExitPoints of ray casting
     // VolumeTex the texture that hold the volume data i.e. head256.raw
     GLint screenSizeLoc = glGetUniformLocation(g_programHandle, "ScreenSize");
-    if (screenSizeLoc >= 0)
-    {
-	glUniform2f(screenSizeLoc, (float)g_winWidth, (float)g_winHeight);
+    if (screenSizeLoc >= 0){
+		glUniform2f(screenSizeLoc, (float)g_winWidth, (float)g_winHeight);
     }
-    else
-    {
-	cout << "ScreenSize"
-	     << "is not bind to the uniform"
-	     << endl;
+    else{
+		cout << "ScreenSize"
+			 << "is not bind to the uniform"
+			 << endl;
     }
     GLint stepSizeLoc = glGetUniformLocation(g_programHandle, "StepSize");
     GL_ERROR();
-    if (stepSizeLoc >= 0)
-    {
-	glUniform1f(stepSizeLoc, g_stepSize);
+    if (stepSizeLoc >= 0){
+		glUniform1f(stepSizeLoc, g_stepSize);
     }
-    else
-    {
-	cout << "StepSize"
-	     << "is not bind to the uniform"
-	     << endl;
+    else{
+		cout << "StepSize"
+			 << "is not bind to the uniform"
+			 << endl;
     }
     GL_ERROR();
     GLint transferFuncLoc = glGetUniformLocation(g_programHandle, "TransferFunc");
-    if (transferFuncLoc >= 0)
-    {
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_1D, g_tffTexObj);
-	glUniform1i(transferFuncLoc, 0);
+    if (transferFuncLoc >= 0){
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_1D, g_tffTexObj);
+		glUniform1i(transferFuncLoc, 0);
     }
-    else
-    {
-	cout << "TransferFunc"
-	     << "is not bind to the uniform"
-	     << endl;
+    else{
+		cout << "TransferFunc"
+			 << "is not bind to the uniform"
+			 << endl;
     }
     GL_ERROR();    
     GLint backFaceLoc = glGetUniformLocation(g_programHandle, "ExitPoints");
-    if (backFaceLoc >= 0)
-    {
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, g_bfTexObj);
-	glUniform1i(backFaceLoc, 1);
+    if (backFaceLoc >= 0){
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, g_bfTexObj);
+		glUniform1i(backFaceLoc, 1);
     }
-    else
-    {
-	cout << "ExitPoints"
-	     << "is not bind to the uniform"
-	     << endl;
+    else{
+		cout << "ExitPoints"
+			 << "is not bind to the uniform"
+			 << endl;
     }
     GL_ERROR();    
     GLint volumeLoc = glGetUniformLocation(g_programHandle, "VolumeTex");
-    if (volumeLoc >= 0)
-    {
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_3D, g_volTexObj);
-	glUniform1i(volumeLoc, 2);
+    if (volumeLoc >= 0){
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_3D, g_volTexObj);
+		glUniform1i(volumeLoc, 2);
     }
-    else
-    {
-	cout << "VolumeTex"
-	     << "is not bind to the uniform"
-	     << endl;
+    else{
+		cout << "VolumeTex"
+			 << "is not bind to the uniform"
+			 << endl;
     }
     
 }
 // init the shader object and shader program
-void initShader()
-{
+void initShader(){
 // vertex shader object for first pass
     g_bfVertHandle = initShaderObj("shader/backface.vs", GL_VERTEX_SHADER);
 // fragment shader object for first pass
@@ -530,8 +511,7 @@ void initShader()
 }
 
 // link the shader objects using the shader program
-void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle)
-{
+void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle){
     const GLsizei maxCount = 2;
     GLsizei count;
     GLuint shaders[maxCount];
@@ -551,10 +531,9 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle)
     glAttachShader(shaderPgm,newFragHandle);
     GL_ERROR();
     glLinkProgram(shaderPgm);
-    if (GL_FALSE == checkShaderLinkStatus(shaderPgm))
-    {
-	cerr << "Failed to relink shader program!" << endl;
-	exit(EXIT_FAILURE);
+    if (GL_FALSE == checkShaderLinkStatus(shaderPgm)){
+		cerr << "Failed to relink shader program!" << endl;
+		exit(EXIT_FAILURE);
     }
     GL_ERROR();
 }
@@ -575,8 +554,7 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle)
 // as well as the location of primitives.
 // the most important is that we got the GLSL to exec the logic. Here we go!
 // draw the back face of the box
-void display()
-{
+void display(){
     glEnable(GL_DEPTH_TEST);
     // test the gl_error
     GL_ERROR();
@@ -599,51 +577,28 @@ void display()
     // glUseProgram(g_programHandle);
     // cull back face
     render(GL_BACK);
-    // need or need not to resume the state of only one active texture unit?
-    // glActiveTexture(GL_TEXTURE1);
-    // glBindTexture(GL_TEXTURE_2D, 0);
-    // glDisable(GL_TEXTURE_2D);
-    // glActiveTexture(GL_TEXTURE2);
-    // glBindTexture(GL_TEXTURE_3D, 0);    
-    // glDisable(GL_TEXTURE_3D);
-    // glActiveTexture(GL_TEXTURE0);
-    // glBindTexture(GL_TEXTURE_1D, 0);    
-    // glDisable(GL_TEXTURE_1D);
-    // glActiveTexture(GL_TEXTURE0);
     glUseProgram(0);
     GL_ERROR(); 
 
-	stbi_flip_vertically_on_write(1);
-	char imagepath[1024];
-	sprintf(imagepath, "../res/0.png");
-	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
-	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
-	glReadBuffer(GL_BACK);
-	glReadPixels(0, 0, g_winWidth, g_winHeight, GL_RGBA, GL_FLOAT, pBuffer);
-	for (unsigned int j = 0; j < g_winHeight; j++) {
-		for (unsigned int k = 0; k < g_winWidth; k++) {
-			int index = j * g_winWidth + k;
-			pImage[index * 3 + 0] = GLubyte(min(pBuffer[index * 4 + 0] * 255, 255.0f));
-			pImage[index * 3 + 1] = GLubyte(min(pBuffer[index * 4 + 1] * 255, 255.0f));
-			pImage[index * 3 + 2] = GLubyte(min(pBuffer[index * 4 + 2] * 255, 255.0f));
-		}
-	}
-	stbi_write_png(imagepath, g_winWidth, g_winHeight, 3, pImage, g_winWidth * 3);
-	delete pBuffer;
-	delete pImage;
+	//stbi_flip_vertically_on_write(1);
+	//char imagepath[1024];
+	//sprintf(imagepath, "../res/0.png");
+	//float* pBuffer = new float[g_winWidth * g_winHeight * 4];
+	//unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
+	//glReadBuffer(GL_BACK);
+	//glReadPixels(0, 0, g_winWidth, g_winHeight, GL_RGBA, GL_FLOAT, pBuffer);
+	//for (unsigned int j = 0; j < g_winHeight; j++) {
+	//	for (unsigned int k = 0; k < g_winWidth; k++) {
+	//		int index = j * g_winWidth + k;
+	//		pImage[index * 3 + 0] = GLubyte(min(pBuffer[index * 4 + 0] * 255, 255.0f));
+	//		pImage[index * 3 + 1] = GLubyte(min(pBuffer[index * 4 + 1] * 255, 255.0f));
+	//		pImage[index * 3 + 2] = GLubyte(min(pBuffer[index * 4 + 2] * 255, 255.0f));
+	//	}
+	//}
+	//stbi_write_png(imagepath, g_winWidth, g_winHeight, 3, pImage, g_winWidth * 3);
+	//delete pBuffer;
+	//delete pImage;
     
-    // // for test the first pass
-    // glBindFramebuffer(GL_READ_FRAMEBUFFER, g_frameBuffer);
-    // checkFramebufferStatus();
-    // glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    // glViewport(0, 0, g_winWidth, g_winHeight);
-    // glClearColor(0.0, 0.0, 1.0, 1.0);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // GL_ERROR();
-    // glBlitFramebuffer(0, 0, g_winWidth, g_winHeight,0, 0,
-    // 		      g_winWidth, g_winHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    // GL_ERROR();
     glutSwapBuffers();
 }
 // both of the two pass use the "render() function"
@@ -651,70 +606,77 @@ void display()
 // the second pass render the frontface of the boundbox
 // together with the frontface, use the backface as a 2D texture in the second pass
 // to calculate the entry point and the exit point of the ray in and out the box.
-void render(GLenum cullFace)
-{
+void render(GLenum cullFace){
     GL_ERROR();
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //  transform the box
-    glm::mat4 projection = glm::perspective(60.0f, (GLfloat)g_winWidth/g_winHeight, 0.1f, 5.0f);
-    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f),
-    				 glm::vec3(0.0f, 0.0f, 0.0f), 
-    				 glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 model = mat4(1.0f);
-    model *= glm::rotate((float)g_angle, glm::vec3(0.0f, 1.0f, 0.0f));
-    model *= glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f));
-    model *= glm::translate(glm::vec3(-0.5f, -0.5f, -0.5f)); 
-    // notice the multiplication order: reverse order of transform
-    glm::mat4 mvp = projection * view * model;
+	// create the projection matrix 
+	float near = 0.1;
+	float far = 5.0;
+	float fov_r = 60.0f;
+
+	// Resulting perspective matrix, FOV in radians, aspect ratio, near, and far clipping plane.
+	glm::mat4 pMatrix = glm::perspective(fov_r, (float)g_winWidth / (float)g_winHeight, near, far);
+
+	// transform
+	float theta = M_PI / 2;
+	float phi = M_PI / 4 * 3;
+	float dist = 2.0f;
+	glm::vec3 direction = glm::vec3(sin(theta) * cos(phi) * dist, sin(theta) * sin(phi) * dist, cos(theta) * dist);
+	glm::vec3 up = glm::vec3(sin(theta - M_PI / 2) * cos(phi), sin(theta - M_PI / 2) * sin(phi), cos(theta - M_PI / 2));
+	glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 eye = center + direction;
+
+	glm::mat4 view = glm::lookAt(eye, center, up);
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model *= glm::rotate(g_angle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	// to make the "head256.raw" i.e. the volume data stand up.
+	model *= glm::scale(glm::vec3(1.2f, 1.2f, 1.2f));
+	// from local space to world space [0, 1]^3 -> [-0.5, 0.5]^3
+	model *= glm::translate(glm::vec3(-0.5f, -0.5f, -0.5f));
+
+	glm::mat4 mvMatrix = view * model;
+	glm::mat4 mvp = pMatrix * mvMatrix;
+
     GLuint mvpIdx = glGetUniformLocation(g_programHandle, "MVP");
-    if (mvpIdx >= 0)
-    {
+    if (mvpIdx >= 0){
     	glUniformMatrix4fv(mvpIdx, 1, GL_FALSE, &mvp[0][0]);
     }
-    else
-    {
+    else{
     	cerr << "can't get the MVP" << endl;
     }
     GL_ERROR();
     drawBox(cullFace);
     GL_ERROR();
-    // glutWireTeapot(0.5);
 }
-void rotateDisplay()
-{
-    g_angle = (g_angle + 0.8f);
+void rotateDisplay(){
+    g_angle = (g_angle + 0.2f);
 	if (g_angle >= 360.0f)
 		g_angle = 0.0f;
     glutPostRedisplay();
 }
-void reshape(int w, int h)
-{
+void reshape(int w, int h){
     g_winWidth = w;
     g_winHeight = h;
-    g_texWidth = w;
-    g_texHeight = h;
 }
 
-void keyboard(unsigned char key, int x, int y)
-{
-    switch (key)
-    {
-    case '\x1B':
-	exit(EXIT_SUCCESS);
-	break;
+void keyboard(unsigned char key, int x, int y){
+    switch (key){
+		case '\x1B':
+		exit(EXIT_SUCCESS);
+		break;
     }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv){
 	glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-    glutInitWindowSize(400, 400);
+    glutInitWindowSize(g_winWidth, g_winHeight);
     glutCreateWindow("GLUT Test");
     GLenum err = glewInit();
-    if (GLEW_OK != err)
-    {
+    if (GLEW_OK != err){
 		/* Problem: glewInit failed, something is seriously wrong. */
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
     }
