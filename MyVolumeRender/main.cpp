@@ -533,7 +533,7 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle)
     // cout << "get FragHandle: " << shaders[1] << endl;
     GL_ERROR();
     for (int i = 0; i < count; i++) {
-	glDetachShader(shaderPgm, shaders[i]);
+		glDetachShader(shaderPgm, shaders[i]);
     }
     // Bind index 0 to the shader input variable "VerPos"
     glBindAttribLocation(shaderPgm, 0, "VerPos");
@@ -628,7 +628,7 @@ void display()
 void render(GLenum cullFace)
 {
     GL_ERROR();
-    glClearColor(0.2f,0.2f,0.2f,1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //  transform the box
     glm::mat4 projection = glm::perspective(60.0f, (GLfloat)g_winWidth/g_winHeight, 0.1f, 400.f);
