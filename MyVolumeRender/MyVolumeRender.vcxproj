@@ -27,6 +27,9 @@
     <None Include="shader\raycasting.fs" />
     <None Include="shader\raycasting.vs" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stb_image_write.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{9C86716E-7EB7-439E-B528-1206FF984F5C}</ProjectGuid>

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glext.h>
@@ -11,7 +12,11 @@
 #include <GL/glm/gtc/matrix_transform.hpp>
 #include <GL/glm/gtx/transform2.hpp>
 #include <GL/glm/gtc/type_ptr.hpp>
+#define _USE_MATH_DEFINES
 
+#define STBI_MSC_SECURE_CRT
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #define GL_ERROR() checkForOpenGLError(__FILE__, __LINE__)
 using namespace std;
@@ -605,6 +610,25 @@ void display()
     // glActiveTexture(GL_TEXTURE0);
     glUseProgram(0);
     GL_ERROR(); 
+
+	stbi_flip_vertically_on_write(1);
+	char imagepath[1024];
+	sprintf(imagepath, "../res/0.png");
+	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
+	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
+	glReadBuffer(GL_BACK);
+	glReadPixels(0, 0, g_winWidth, g_winHeight, GL_RGBA, GL_FLOAT, pBuffer);
+	for (unsigned int j = 0; j < g_winHeight; j++) {
+		for (unsigned int k = 0; k < g_winWidth; k++) {
+			int index = j * g_winWidth + k;
+			pImage[index * 3 + 0] = GLubyte(min(pBuffer[index * 4 + 0] * 255, 255.0f));
+			pImage[index * 3 + 1] = GLubyte(min(pBuffer[index * 4 + 1] * 255, 255.0f));
+			pImage[index * 3 + 2] = GLubyte(min(pBuffer[index * 4 + 2] * 255, 255.0f));
+		}
+	}
+	stbi_write_png(imagepath, g_winWidth, g_winHeight, 3, pImage, g_winWidth * 3);
+	delete pBuffer;
+	delete pImage;
     
     // // for test the first pass
     // glBindFramebuffer(GL_READ_FRAMEBUFFER, g_frameBuffer);
@@ -628,7 +652,7 @@ void display()
 void render(GLenum cullFace)
 {
     GL_ERROR();
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //  transform the box
     glm::mat4 projection = glm::perspective(60.0f, (GLfloat)g_winWidth/g_winHeight, 0.1f, 400.f);
@@ -691,8 +715,8 @@ int main(int argc, char** argv)
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
-	/* Problem: glewInit failed, something is seriously wrong. */
-	fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+		/* Problem: glewInit failed, something is seriously wrong. */
+		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
     }
   
     glutKeyboardFunc(&keyboard);
