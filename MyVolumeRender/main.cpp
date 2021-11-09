@@ -72,9 +72,9 @@ void init()
     g_texHeight = g_winHeight;
     initVBO();
     initShader();
-    g_tffTexObj = initTFF1DTex("TF1D\\tooth-4.TF1D");
+    g_tffTexObj = initTFF1DTex("../TF1D/head-1.TF1D");
     g_bfTexObj = initFace2DTex(g_texWidth, g_texHeight);
-    g_volTexObj = initVol3DTex("tooth_103x94x161_uint8.raw", 103, 94, 161);
+    g_volTexObj = initVol3DTex("head256.raw", 256, 256, 225);
     GL_ERROR();
     initFrameBuffer(g_bfTexObj, g_texWidth, g_texHeight);
     GL_ERROR();
@@ -661,9 +661,7 @@ void render(GLenum cullFace)
     				 glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 model = mat4(1.0f);
     model *= glm::rotate((float)g_angle, glm::vec3(0.0f, 1.0f, 0.0f));
-    // to make the "head256.raw" i.e. the volume data stand up.
     model *= glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f));
-	model *= glm::scale(glm::vec3(1.1f * 103.0f / 161.0f, 1.1f * 94.0f / 161.0f, 1.1f));
     model *= glm::translate(glm::vec3(-0.5f, -0.5f, -0.5f)); 
     // notice the multiplication order: reverse order of transform
     glm::mat4 mvp = projection * view * model;
@@ -683,7 +681,7 @@ void render(GLenum cullFace)
 }
 void rotateDisplay()
 {
-    g_angle = (g_angle + 0.2f);
+    g_angle = (g_angle + 0.8f);
 	if (g_angle >= 360.0f)
 		g_angle = 0.0f;
     glutPostRedisplay();
