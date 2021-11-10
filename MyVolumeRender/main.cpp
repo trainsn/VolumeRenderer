@@ -24,8 +24,8 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-GLuint g_winWidth = 896;
-GLuint g_winHeight = 896;
+const GLuint g_winWidth = 2048;
+const GLuint g_winHeight = 2048;
 GLfloat g_angle = 0;
 GLuint g_frameBuffer;
 // transfer function
@@ -443,7 +443,7 @@ void rcSetUinforms(){
 		glUniform2f(screenSizeLoc, (float)g_winWidth, (float)g_winHeight);
     }
     else{
-		cout << "ScreenSize"
+		cout << "ScreenSize "
 			 << "is not bind to the uniform"
 			 << endl;
     }
@@ -608,7 +608,7 @@ void display(){
 // to calculate the entry point and the exit point of the ray in and out the box.
 void render(GLenum cullFace){
     GL_ERROR();
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// create the projection matrix 
 	float near = 0.1;
@@ -657,10 +657,6 @@ void rotateDisplay(){
 		g_angle = 0.0f;
     glutPostRedisplay();
 }
-void reshape(int w, int h){
-    g_winWidth = w;
-    g_winHeight = h;
-}
 
 void keyboard(unsigned char key, int x, int y){
     switch (key){
@@ -683,7 +679,6 @@ int main(int argc, char** argv){
   
     glutKeyboardFunc(&keyboard);
     glutDisplayFunc(&display);
-    glutReshapeFunc(&reshape);
     glutIdleFunc(&rotateDisplay);
     init();
     glutMainLoop();
