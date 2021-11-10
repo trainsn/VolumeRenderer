@@ -24,8 +24,8 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-const GLuint g_winWidth = 2048;
-const GLuint g_winHeight = 2048;
+const GLuint g_winWidth = 1024;
+const GLuint g_winHeight = 1024;
 GLfloat g_angle = 0;
 GLuint g_frameBuffer;
 // transfer function
@@ -65,7 +65,7 @@ void render(GLenum cullFace);
 void init(){
     initVBO();
     initShader();
-    g_tffTexObj = initTFF1DTex("../TF1D/nyx-1.TF1D");
+    g_tffTexObj = initTFF1DTex("../TF1D/nyx-2.TF1D");
     g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
     g_volTexObj = initVol3DTex("D:\\OSU\\Grade3\\Nyx\\00150density_upsample.raw", 256, 256, 256);
     GL_ERROR();
@@ -670,7 +670,7 @@ int main(int argc, char** argv){
 	glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(g_winWidth, g_winHeight);
-    glutCreateWindow("GLUT Test");
+    glutCreateWindow("Nyx Renderer");
     GLenum err = glewInit();
     if (GLEW_OK != err){
 		/* Problem: glewInit failed, something is seriously wrong. */
