@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <GL/glew.h>
 #include <GL/gl.h>
-#include <GL/glext.h>
 #include <GL/glut.h>
 #include <GL/glm/glm.hpp>
 #include <GL/glm/gtc/matrix_transform.hpp>
@@ -18,7 +17,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-#define GL_ERROR() checkForOpenGLError(__FILE__, __LINE__)
 using namespace std;
 using glm::mat4;
 using glm::vec3;
@@ -38,21 +36,6 @@ GLuint g_bfVertHandle;
 GLuint g_bfFragHandle;
 float g_stepSize = 0.001f;
 
-
-int checkForOpenGLError(const char* file, int line){
-    // return 1 if an OpenGL error occured, 0 otherwise.
-    GLenum glErr;
-    int retCode = 0;
-
-    glErr = glGetError();
-    while(glErr != GL_NO_ERROR){
-		cout << "glError in file " << file
-			 << "@line " << line << gluErrorString(glErr) << endl;
-		retCode = 1;
-		exit(EXIT_FAILURE);
-    }
-    return retCode;
-}
 void keyboard(unsigned char key, int x, int y);
 void display(void);
 void initVBO();
@@ -68,9 +51,7 @@ void init(){
     g_tffTexObj = initTFF1DTex("../TF1D/nyx-2.TF1D");
     g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
     g_volTexObj = initVol3DTex("D:\\OSU\\Grade3\\Nyx\\00150density_upsample.raw", 256, 256, 256);
-    GL_ERROR();
     initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
-    GL_ERROR();
 }
 // init the vertex buffer object
 void initVBO(){
@@ -386,7 +367,7 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d){
 			data_min = data[i];
 		if (data[i] > data_max)
 			data_max = data[i];
-		data[i] /= 12.0f;
+		data[i] /= 12.5f;
 	}
 
     glGenTextures(1, &g_volTexObj);
@@ -448,7 +429,6 @@ void rcSetUinforms(){
 			 << endl;
     }
     GLint stepSizeLoc = glGetUniformLocation(g_programHandle, "StepSize");
-    GL_ERROR();
     if (stepSizeLoc >= 0){
 		glUniform1f(stepSizeLoc, g_stepSize);
     }
@@ -457,7 +437,6 @@ void rcSetUinforms(){
 			 << "is not bind to the uniform"
 			 << endl;
     }
-    GL_ERROR();
     GLint transferFuncLoc = glGetUniformLocation(g_programHandle, "TransferFunc");
     if (transferFuncLoc >= 0){
 		glActiveTexture(GL_TEXTURE0);
@@ -468,8 +447,7 @@ void rcSetUinforms(){
 		cout << "TransferFunc"
 			 << "is not bind to the uniform"
 			 << endl;
-    }
-    GL_ERROR();    
+    }  
     GLint backFaceLoc = glGetUniformLocation(g_programHandle, "ExitPoints");
     if (backFaceLoc >= 0){
 		glActiveTexture(GL_TEXTURE1);
@@ -480,8 +458,7 @@ void rcSetUinforms(){
 		cout << "ExitPoints"
 			 << "is not bind to the uniform"
 			 << endl;
-    }
-    GL_ERROR();    
+    }   
     GLint volumeLoc = glGetUniformLocation(g_programHandle, "VolumeTex");
     if (volumeLoc >= 0){
 		glActiveTexture(GL_TEXTURE2);
@@ -518,7 +495,6 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle){
     glGetAttachedShaders(shaderPgm, maxCount, &count, shaders);
     // cout << "get VertHandle: " << shaders[0] << endl;
     // cout << "get FragHandle: " << shaders[1] << endl;
-    GL_ERROR();
     for (int i = 0; i < count; i++) {
 		glDetachShader(shaderPgm, shaders[i]);
     }
@@ -526,16 +502,13 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle){
     glBindAttribLocation(shaderPgm, 0, "VerPos");
     // Bind index 1 to the shader input variable "VerClr"
     glBindAttribLocation(shaderPgm, 1, "VerClr");
-    GL_ERROR();
     glAttachShader(shaderPgm,newVertHandle);
     glAttachShader(shaderPgm,newFragHandle);
-    GL_ERROR();
     glLinkProgram(shaderPgm);
     if (GL_FALSE == checkShaderLinkStatus(shaderPgm)){
 		cerr << "Failed to relink shader program!" << endl;
 		exit(EXIT_FAILURE);
     }
-    GL_ERROR();
 }
 
 // the color of the vertex in the back face is also the location
@@ -557,7 +530,6 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle){
 void display(){
     glEnable(GL_DEPTH_TEST);
     // test the gl_error
-    GL_ERROR();
     // render to texture
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_frameBuffer);
     glViewport(0, 0, g_winWidth, g_winHeight);
@@ -566,19 +538,15 @@ void display(){
     // cull front face
     render(GL_FRONT);
     glUseProgram(0);
-    GL_ERROR();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, g_winWidth, g_winHeight);
     linkShader(g_programHandle, g_rcVertHandle, g_rcFragHandle);
-    GL_ERROR();
     glUseProgram(g_programHandle);
     rcSetUinforms();
-    GL_ERROR();
     // glUseProgram(g_programHandle);
     // cull back face
     render(GL_BACK);
     glUseProgram(0);
-    GL_ERROR(); 
 
 	//stbi_flip_vertically_on_write(1);
 	//char imagepath[1024];
@@ -607,7 +575,6 @@ void display(){
 // together with the frontface, use the backface as a 2D texture in the second pass
 // to calculate the entry point and the exit point of the ray in and out the box.
 void render(GLenum cullFace){
-    GL_ERROR();
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// create the projection matrix 
@@ -647,9 +614,7 @@ void render(GLenum cullFace){
     else{
     	cerr << "can't get the MVP" << endl;
     }
-    GL_ERROR();
     drawBox(cullFace);
-    GL_ERROR();
 }
 void rotateDisplay(){
     g_angle = (g_angle + 0.2f);
