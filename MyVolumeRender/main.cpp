@@ -22,9 +22,10 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-const GLuint g_winWidth = 1024;
-const GLuint g_winHeight = 1024;
+const GLuint g_winWidth = 512;
+const GLuint g_winHeight = 512;
 GLfloat g_angle = 0;
+int idx = -1;
 GLuint g_frameBuffer;
 // transfer function
 GLuint g_tffTexObj;
@@ -114,6 +115,8 @@ void initVBO(){
     // glBindVertexArray(0);
     g_vao = vao;
 }
+
+
 void drawBox(GLenum glFaces)
 {
     glEnable(GL_CULL_FACE);
@@ -550,7 +553,7 @@ void display(){
 
 	//stbi_flip_vertically_on_write(1);
 	//char imagepath[1024];
-	//sprintf(imagepath, "../res/0.png");
+	//sprintf(imagepath, "../res/%d.png", idx);
 	//float* pBuffer = new float[g_winWidth * g_winHeight * 4];
 	//unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
 	//glReadBuffer(GL_BACK);
@@ -578,8 +581,8 @@ void render(GLenum cullFace){
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// create the projection matrix 
-	float near = 0.1;
-	float far = 5.0;
+	float near = 0.1f;
+	float far = 400.0f;
 	float fov_r = 60.0f;
 
 	// Resulting perspective matrix, FOV in radians, aspect ratio, near, and far clipping plane.
@@ -617,19 +620,15 @@ void render(GLenum cullFace){
     drawBox(cullFace);
 }
 void rotateDisplay(){
-    g_angle = (g_angle + 0.2f);
-	if (g_angle >= 360.0f)
-		g_angle = 0.0f;
-    glutPostRedisplay();
+	idx++;
+	g_angle = 20.0f * idx;
+	cout << g_angle << endl;
+	if (g_angle >= 360.0f) {
+		exit(0);
+	}
+	glutPostRedisplay();
 }
 
-void keyboard(unsigned char key, int x, int y){
-    switch (key){
-		case '\x1B':
-		exit(EXIT_SUCCESS);
-		break;
-    }
-}
 
 int main(int argc, char** argv){
 	glutInit(&argc, argv);
@@ -642,7 +641,6 @@ int main(int argc, char** argv){
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
     }
   
-    glutKeyboardFunc(&keyboard);
     glutDisplayFunc(&display);
     glutIdleFunc(&rotateDisplay);
     init();
