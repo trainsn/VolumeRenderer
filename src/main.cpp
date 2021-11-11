@@ -44,7 +44,6 @@ GLuint g_programHandle;
 const GLuint g_winWidth = 2048;
 const GLuint g_winHeight = 2048;
 GLfloat g_angle = 0;
-int idx = 0;
 GLuint g_frameBuffer;
 // transfer function
 GLuint g_tffTexObj;
@@ -668,44 +667,47 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle) {
 // draw the back face of the box
 void display() {
 	glEnable(GL_DEPTH_TEST);
-	// test the gl_error
-	// render to texture
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_frameBuffer);
-	glViewport(0, 0, g_winWidth, g_winHeight);
-	linkShader(g_programHandle, g_bfVertHandle, g_bfFragHandle);
-	glUseProgram(g_programHandle);
-	// cull front face
-	render(GL_FRONT);
-	glUseProgram(0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, g_winWidth, g_winHeight);
-	linkShader(g_programHandle, g_rcVertHandle, g_rcFragHandle);
-	glUseProgram(g_programHandle);
-	rcSetUinforms();
-	// glUseProgram(g_programHandle);
-	// cull back face
-	render(GL_BACK);
-	glUseProgram(0);
-	glFlush();
-
-	stbi_flip_vertically_on_write(1);
-	char imagepath[1024];
-	sprintf(imagepath, "../res/%d.png", idx);
-	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
-	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
-	glReadBuffer(GL_BACK);
-	glReadPixels(0, 0, g_winWidth, g_winHeight, GL_RGBA, GL_FLOAT, pBuffer);
-	for (unsigned int j = 0; j < g_winHeight; j++) {
-		for (unsigned int k = 0; k < g_winWidth; k++) {
-			int index = j * g_winWidth + k;
-			pImage[index * 3 + 0] = GLubyte(min(pBuffer[index * 4 + 0] * 255, 255.0f));
-			pImage[index * 3 + 1] = GLubyte(min(pBuffer[index * 4 + 1] * 255, 255.0f));
-			pImage[index * 3 + 2] = GLubyte(min(pBuffer[index * 4 + 2] * 255, 255.0f));
-		}
+	for (int idx = 0; idx < 18; idx++){
+	    g_angle = idx * 20.0f;
+    	// render to texture
+    	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_frameBuffer);
+    	glViewport(0, 0, g_winWidth, g_winHeight);
+    	linkShader(g_programHandle, g_bfVertHandle, g_bfFragHandle);
+    	glUseProgram(g_programHandle);
+	    // cull front face
+    	render(GL_FRONT);
+    	glUseProgram(0);
+    	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    	glViewport(0, 0, g_winWidth, g_winHeight);
+    	linkShader(g_programHandle, g_rcVertHandle, g_rcFragHandle);
+    	glUseProgram(g_programHandle);
+    	rcSetUinforms();
+    	// glUseProgram(g_programHandle);
+    	// cull back face
+    	render(GL_BACK);
+    	glUseProgram(0);
+    	glFlush();
+    
+    	stbi_flip_vertically_on_write(1);
+    	char imagepath[1024];
+    	sprintf(imagepath, "../res/%d.png", idx);
+    	cout << "output " << idx << ".png" << endl; 
+    	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
+    	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
+    	glReadBuffer(GL_BACK);
+    	glReadPixels(0, 0, g_winWidth, g_winHeight, GL_RGBA, GL_FLOAT, pBuffer);
+    	for (unsigned int j = 0; j < g_winHeight; j++) {
+    		for (unsigned int k = 0; k < g_winWidth; k++) {
+    			int index = j * g_winWidth + k;
+    			pImage[index * 3 + 0] = GLubyte(min(pBuffer[index * 4 + 0] * 255, 255.0f));
+    			pImage[index * 3 + 1] = GLubyte(min(pBuffer[index * 4 + 1] * 255, 255.0f));
+    			pImage[index * 3 + 2] = GLubyte(min(pBuffer[index * 4 + 2] * 255, 255.0f));
+    		}
+    	}
+    	stbi_write_png(imagepath, g_winWidth, g_winHeight, 3, pImage, g_winWidth * 3);
+    	delete pBuffer;
+    	delete pImage;
 	}
-	stbi_write_png(imagepath, g_winWidth, g_winHeight, 3, pImage, g_winWidth * 3);
-	delete pBuffer;
-	delete pImage;
 }
 // both of the two pass use the "render() function"
 // the first pass render the backface of the boundbox
