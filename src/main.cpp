@@ -41,8 +41,8 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-const GLuint g_winWidth = 2048;
-const GLuint g_winHeight = 2048;
+const GLuint g_winWidth = 3072;
+const GLuint g_winHeight = 3072;
 GLfloat g_angle = 0;
 GLuint g_frameBuffer;
 // transfer function
@@ -152,6 +152,7 @@ int main(int argc, char *argv[]) {
 	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-2.TF1D");
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	g_volTexObj = initVol3DTex("/fs/project/PAS0027/nyx_graph/log/train_upsample/0000/00150density.bin", 256, 256, 256);
+    // g_volTexObj = initVol3DTex("../res/woodbranch_2048x2048x2048_float32.raw", 2048, 2048, 2048);
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
 	display();
 
@@ -212,7 +213,7 @@ void initVBO() {
 		1.0, 1.0, 1.0
 	};
 
-	// draw the six faces of the boundbox by drawwing triangles
+	// draw the six faces of the boundbox by drawing triangles
 	// draw it contra-clockwise
 	// front: 1 5 7 3
 	// back: 0 2 6 4
@@ -481,7 +482,9 @@ GLuint initFace2DTex(GLuint bfTexWidth, GLuint bfTexHeight) {
 // init 3D texture to store the volume data used fo ray casting
 GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	FILE *fp;
-	size_t size = w * h * d;
+	long long int size = w * h;
+	size *= d;
+	cout << w << " " << h << " " << d << " " << size << endl;
 	float *data = new float[size];
 	if (!(fp = fopen(filename, "rb"))) {
 		cout << "Error: opening .raw file failed" << endl;
@@ -508,6 +511,7 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 			data_max = data[i];
 		data[i] /= 12.5f;
 	}
+	cout << data_min << " " << data_max << endl;
 
 	glGenTextures(1, &g_volTexObj);
 	// bind 3D texture target
@@ -519,7 +523,8 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
 	// pixel transfer happens here from client to OpenGL server
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_RED, w, h, d, 0, GL_RED, GL_FLOAT, data);
+	cout << "start creating volume texture" << endl;
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_COMPRESSED_RED, w, h, d, 0, GL_RED, GL_FLOAT, data);
 
 	delete[]data;
 	cout << "volume texture created" << endl;
@@ -667,7 +672,7 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle) {
 // draw the back face of the box
 void display() {
 	glEnable(GL_DEPTH_TEST);
-	for (int idx = 0; idx < 18; idx++){
+	for (int idx = 0; idx < 1; idx++){
 	    g_angle = idx * 20.0f;
     	// render to texture
     	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_frameBuffer);
@@ -690,7 +695,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "../res/%d.png", idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_image/train/%d.png", idx);
     	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
@@ -715,17 +720,57 @@ void display() {
 // together with the frontface, use the backface as a 2D texture in the second pass
 // to calculate the entry point and the exit point of the ray in and out the box.
 void render(GLenum cullFace) {
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// create the projection matrix 
 	float fov_r = 60.0f * M_PI / 180.0f;
 
-	// Resulting perspective matrix, FOV in radians, aspect ratio, near, and far clipping plane.
-	glm::mat4 pMatrix = glm::perspective(fov_r, (float)g_winWidth / (float)g_winHeight, 0.1f, 400.0f);
+	bool perspective_projection = false;
+	glm::mat4 pMatrix;
+	if (perspective_projection) {
+		// Resulting perspective matrix, FOV in radians, aspect ratio, near, and far clipping plane.
+		pMatrix = glm::perspective(fov_r, (float)g_winWidth / (float)g_winHeight, 0.1f, 400.f);
+	}
+	else {
+		// The goal is to have the object be about the same size in the window
+		// during orthographic project as it is during perspective projection.
+
+		float a = (float)g_winWidth / (float)g_winHeight;
+		float h = 3.5f * tan(fov_r / 2); // Window aspect ratio.
+		float w = h * a; // Knowing the new window height size, get the new window width size based on the aspect ratio.
+
+		// The canvas' origin is the upper left corner. To the right is the positive x-axis. 
+		// Going down is the positive y-axis.
+
+		// Any object at the world origin would appear at the upper left hand corner.
+		// Shift the origin to the middle of the screen.
+		
+		// Also, invert the y-axis as WebgL's positive y-axis points up while the canvas' positive
+		// y-axis points down the screen.
+
+		//           (0,O)------------------------(w,0)
+		//               |                        |
+		//               |                        |
+		//               |                        |
+		//           (0,h)------------------------(w,h)
+		//
+		//  (-(w/2),(h/2))------------------------((w/2),(h/2))
+		//               |                        |
+		//               |         (0,0)          |gbo
+		//               |                        |
+		// (-(w/2),-(h/2))------------------------((w/2),-(h/2))
+
+		// Resulting perspective matrix, left, right, bottom, top, near, and far clipping plane.
+		pMatrix = glm::ortho(-(w / 2),
+			(w / 2),
+			-(h / 2),
+			(h / 2),
+		    0.1f, 400.f);
+	}
 
 	// transform
 	float theta = M_PI / 2;
-	float phi = M_PI / 4 * 3;
+	float phi = M_PI * 3 / 4;
 	float dist = 2.0f;
 	glm::vec3 direction = glm::vec3(sin(theta) * cos(phi) * dist, sin(theta) * sin(phi) * dist, cos(theta) * dist);
 	glm::vec3 up = glm::vec3(sin(theta - M_PI / 2) * cos(phi), sin(theta - M_PI / 2) * sin(phi), cos(theta - M_PI / 2));

@@ -33,7 +33,7 @@ void main()
     vec3 deltaDir = normalize(dir) * StepSize;
     vec4 colorAcum = vec4(0.0); // The dest color
     // backgroundColor
-    vec4 bgColor = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 bgColor = vec4(0.0, 0.0, 0.0, 1.0);
 
 	int steps = int(len / StepSize);
   
@@ -41,7 +41,7 @@ void main()
     {
         // 获得体数据中的标量值scaler value
 		vec3 voxelCoord = EntryPoint + deltaDir * i;
-        float intensity =  texture(VolumeTex, voxelCoord).x;
+        float intensity =  texture(VolumeTex, voxelCoord * 6.0f).x;
 
         // 查找传输函数中映射后的值
         // 依赖性纹理读取  
