@@ -41,9 +41,9 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-const GLuint g_winWidth = 3072;
-const GLuint g_winHeight = 3072;
-GLfloat g_angle = 0;
+const GLuint g_winWidth = 512;
+const GLuint g_winHeight = 512;
+float theta, phi;
 GLuint g_frameBuffer;
 // transfer function
 GLuint g_tffTexObj;
@@ -54,6 +54,8 @@ GLuint g_rcFragHandle;
 GLuint g_bfVertHandle;
 GLuint g_bfFragHandle;
 float g_stepSize = 0.001f;
+
+char filename[1024];
 
 constexpr int opengl_version[] = { 3, 3 };
 
@@ -108,9 +110,8 @@ int main(int argc, char *argv[]) {
 
 	EGLint major = 0, minor = 0;
 	eglInitialize(egl_display, &major, &minor);
-	cout << "EGL version: " << major << "." << minor << endl;
-	cout << "EGL vendor string: " << eglQueryString(egl_display, EGL_VENDOR)
-		<< endl;
+// 	cout << "EGL version: " << major << "." << minor << endl;
+// 	cout << "EGL vendor string: " << eglQueryString(egl_display, EGL_VENDOR) << endl;
 	MY_EGL_CHECK();
 
 	// 2. Select an appropriate configuration
@@ -143,15 +144,19 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
 
-	cout << "OpenGL version: " << GLVersion.major << "." << GLVersion.minor
-		<< endl;
+// 	cout << "OpenGL version: " << GLVersion.major << "." << GLVersion.minor << endl;
 
 	// render and save
 	initVBO();
 	initShader();
-	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-2.TF1D");
+	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-gray.TF1D");
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
-	g_volTexObj = initVol3DTex("/fs/project/PAS0027/nyx_graph/log/train_upsample/0000/00150density.bin", 256, 256, 256);
+	
+	sprintf(filename, argv[1]);
+	char input_path[1024];
+	cout << filename << endl;
+	sprintf(input_path, "/fs/project/PAS0027/nyx1/output/%s.bin", filename);
+	g_volTexObj = initVol3DTex(input_path, 256, 256, 256);
     // g_volTexObj = initVol3DTex("../res/woodbranch_2048x2048x2048_float32.raw", 2048, 2048, 2048);
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
 	display();
@@ -369,9 +374,6 @@ GLuint initTFF1DTex(const char* filename) {
 		cout << "Error: opening .tf1d file failed" << endl;
 		exit(EXIT_FAILURE);
 	}
-	else {
-		cout << "OK: open .tf1d file successed" << endl;
-	}
 
 	int keyNum;
 	float thresholdL, thresholdU;
@@ -484,21 +486,14 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	FILE *fp;
 	long long int size = w * h;
 	size *= d;
-	cout << w << " " << h << " " << d << " " << size << endl;
 	float *data = new float[size];
 	if (!(fp = fopen(filename, "rb"))) {
 		cout << "Error: opening .raw file failed" << endl;
 		exit(EXIT_FAILURE);
 	}
-	else {
-		cout << "OK: open .raw file successed" << endl;
-	}
 	if (fread(data, sizeof(float), size, fp) != size) {
 		cout << "Error: read .raw file failed" << endl;
 		exit(1);
-	}
-	else {
-		cout << "OK: read .raw file successed" << endl;
 	}
 	fclose(fp);
 
@@ -511,7 +506,7 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 			data_max = data[i];
 		data[i] /= 12.5f;
 	}
-	cout << data_min << " " << data_max << endl;
+	cout << "data_min: " << data_min << " data_max: " << data_max << endl;
 
 	glGenTextures(1, &g_volTexObj);
 	// bind 3D texture target
@@ -523,11 +518,11 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
 	// pixel transfer happens here from client to OpenGL server
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	cout << "start creating volume texture" << endl;
+// 	cout << "start creating volume texture" << endl;
 	glTexImage3D(GL_TEXTURE_3D, 0, GL_COMPRESSED_RED, w, h, d, 0, GL_RED, GL_FLOAT, data);
 
 	delete[]data;
-	cout << "volume texture created" << endl;
+// 	cout << "volume texture created" << endl;
 	return g_volTexObj;
 }
 
@@ -672,9 +667,23 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle) {
 // draw the back face of the box
 void display() {
 	glEnable(GL_DEPTH_TEST);
-	for (int idx = 0; idx < 1; idx++){
-	    g_angle = idx * 20.0f;
-    	// render to texture
+	
+	FILE* fp;
+	char vp_path[1024];
+	sprintf(vp_path, "/fs/project/PAS0027/nyx_image/train/%s/viewpoints.txt", filename);
+	if (!(fp = fopen(vp_path, "r"))) {
+		cout << "Error: opening viewpoint file failed" << endl;
+		exit(EXIT_FAILURE);
+	}
+	int vpNum;
+	fscanf(fp, "%d", &vpNum);
+	for (int idx = 0; idx < vpNum; idx++){
+		fscanf(fp, "%f%f", &phi, &theta);
+		cout << phi << " " << theta << " ";
+		phi = phi * M_PI / 180.0f;
+		theta = theta * M_PI / 180.0f;
+		
+		// render to texture
     	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_frameBuffer);
     	glViewport(0, 0, g_winWidth, g_winHeight);
     	linkShader(g_programHandle, g_bfVertHandle, g_bfFragHandle);
@@ -695,7 +704,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_image/train/%d.png", idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_image/train512/%s/%d.png", filename, idx);
     	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
@@ -713,6 +722,7 @@ void display() {
     	delete pBuffer;
     	delete pImage;
 	}
+	fclose(fp);
 }
 // both of the two pass use the "render() function"
 // the first pass render the backface of the boundbox
@@ -723,9 +733,9 @@ void render(GLenum cullFace) {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// create the projection matrix 
-	float fov_r = 60.0f * M_PI / 180.0f;
+	float fov_r = 30.0f * M_PI / 180.0f;
 
-	bool perspective_projection = false;
+	bool perspective_projection = true;
 	glm::mat4 pMatrix;
 	if (perspective_projection) {
 		// Resulting perspective matrix, FOV in radians, aspect ratio, near, and far clipping plane.
@@ -767,10 +777,8 @@ void render(GLenum cullFace) {
 			(h / 2),
 		    0.1f, 400.f);
 	}
-
+	
 	// transform
-	float theta = M_PI / 2;
-	float phi = M_PI * 3 / 4;
 	float dist = 2.0f;
 	glm::vec3 direction = glm::vec3(sin(theta) * cos(phi) * dist, sin(theta) * sin(phi) * dist, cos(theta) * dist);
 	glm::vec3 up = glm::vec3(sin(theta - M_PI / 2) * cos(phi), sin(theta - M_PI / 2) * sin(phi), cos(theta - M_PI / 2));
@@ -780,10 +788,9 @@ void render(GLenum cullFace) {
 	glm::mat4 view = glm::lookAt(eye, center, up);
 
 	glm::mat4 model = glm::mat4(1.0f);
-	model *= glm::rotate(g_angle, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	// to make the "head256.raw" i.e. the volume data stand up.
-	model *= glm::scale(glm::vec3(1.2f, 1.2f, 1.2f));
+	model *= glm::scale(glm::vec3(0.6f, 0.6f, 0.6f));
 	// from local space to world space [0, 1]^3 -> [-0.5, 0.5]^3
 	model *= glm::translate(glm::vec3(-0.5f, -0.5f, -0.5f));
 

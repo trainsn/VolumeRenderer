@@ -41,7 +41,7 @@ void main()
     {
         // 获得体数据中的标量值scaler value
 		vec3 voxelCoord = EntryPoint + deltaDir * i;
-        float intensity =  texture(VolumeTex, voxelCoord * 6.0f).x;
+        float intensity =  texture(VolumeTex, voxelCoord * 1.0f).x;
 
         // 查找传输函数中映射后的值
         // 依赖性纹理读取  
@@ -56,6 +56,5 @@ void main()
     colorAcum.a = 1.0;
     FragColor = colorAcum;
     // for test
-    //FragColor = vec4(EntryPoint, 1.0);
     //FragColor = vec4(exitPoint, 1.0);
 }

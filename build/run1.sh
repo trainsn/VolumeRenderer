@@ -1,11 +1,40 @@
-#PBS -N MPASMap 
-#PBS -l walltime=1:00:00
-#PBS -l nodes=1:ppn=1
-#PBS -j oe
-
-make
-
-./MPASMap BwsA0.00_.nc
-./MPASMap BwsA1.00_.nc
-./MPASMap BwsA3.00_.nc
-./MPASMap BwsA5.00_.nc
+./NyxVR 0011/00153density
+./NyxVR 0011/00171density
+./NyxVR 0011/00176density
+./NyxVR 0011/00192density
+./NyxVR 0012/00156density
+./NyxVR 0012/00160density
+./NyxVR 0012/00167density
+./NyxVR 0012/00174density
+./NyxVR 0012/00197density
+./NyxVR 0013/00151density
+./NyxVR 0013/00154density
+./NyxVR 0013/00157density
+./NyxVR 0013/00160density
+./NyxVR 0013/00197density
+./NyxVR 0014/00164density
+./NyxVR 0014/00179density
+./NyxVR 0014/00182density
+./NyxVR 0014/00186density
+./NyxVR 0014/00191density
+./NyxVR 0014/00194density
+./NyxVR 0015/00168density
+./NyxVR 0015/00172density
+./NyxVR 0015/00173density
+./NyxVR 0015/00187density
+./NyxVR 0015/00198density
+./NyxVR 0016/00160density
+./NyxVR 0016/00162density
+./NyxVR 0016/00178density
+./NyxVR 0016/00197density
+./NyxVR 0017/00178density
+./NyxVR 0018/00164density
+./NyxVR 0019/00160density
+./NyxVR 0019/00164density
+./NyxVR 0019/00182density
+./NyxVR 0020/00153density
+./NyxVR 0020/00168density
+./NyxVR 0020/00169density
+./NyxVR 0020/00171density
+./NyxVR 0020/00192density
+./NyxVR 0020/00198density
