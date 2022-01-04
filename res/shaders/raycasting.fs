@@ -37,24 +37,32 @@ void main()
 
 	int steps = int(len / StepSize);
   
+    float max_intensity = 0;
     for(int i = 0; i < steps; i++)
     {
         // 获得体数据中的标量值scaler value
 		vec3 voxelCoord = EntryPoint + deltaDir * i;
         float intensity =  texture(VolumeTex, voxelCoord * 1.0f).x;
-
-        // 查找传输函数中映射后的值
-        // 依赖性纹理读取  
-        vec4 colorSample = texture(TransferFunc, intensity);
-		colorAcum = colorAcum + colorSample * vec4(colorSample.aaa, 1.0) * (1.0 - colorAcum.a);
-       
-		if (colorAcum.a > 0.99){
-            break;
+        
+        if (intensity > max_intensity){
+            max_intensity = intensity;
         }
+
+//         // 查找传输函数中映射后的值
+//         // 依赖性纹理读取  
+//         vec4 colorSample = texture(TransferFunc, intensity);
+// 		colorAcum = colorAcum + colorSample * vec4(colorSample.aaa, 1.0) * (1.0 - colorAcum.a);
+       
+// 		if (colorAcum.a > 0.99){
+//             break;
+//         }
     }
-	colorAcum = colorAcum + bgColor * (1.0 - colorAcum.a);
+    vec4 colorSample = texture(TransferFunc, max_intensity);
+    // vec4 colorSample = vec4(max_intensity);
+    colorAcum = colorSample;
+    colorAcum = colorAcum + bgColor * (1.0 - colorAcum.a);
     colorAcum.a = 1.0;
     FragColor = colorAcum;
     // for test
-    //FragColor = vec4(exitPoint, 1.0);
+    //FragColor = vec4(1.0);
 }

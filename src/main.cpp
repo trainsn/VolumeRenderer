@@ -41,8 +41,8 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-const GLuint g_winWidth = 512;
-const GLuint g_winHeight = 512;
+const GLuint g_winWidth = 1024;
+const GLuint g_winHeight = 1024;
 float theta, phi;
 GLuint g_frameBuffer;
 // transfer function
@@ -149,15 +149,17 @@ int main(int argc, char *argv[]) {
 	// render and save
 	initVBO();
 	initShader();
-	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-gray.TF1D");
+	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-3.TF1D");
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
 	sprintf(filename, argv[1]);
 	char input_path[1024];
 	cout << filename << endl;
-	sprintf(input_path, "/fs/project/PAS0027/nyx1/output/%s.bin", filename);
-	g_volTexObj = initVol3DTex(input_path, 256, 256, 256);
-    // g_volTexObj = initVol3DTex("../res/woodbranch_2048x2048x2048_float32.raw", 2048, 2048, 2048);
+// 	sprintf(input_path, "/fs/project/PAS0027/nyx1/output/%s.bin", filename);
+    sprintf(input_path, "/fs/project/PAS0027/nyx_graph/vp5/10.3/pred/%s.bin", filename);
+    // sprintf(input_path, "/fs/project/PAS0027/nyx_tnet/vp5/10.3/pred/%s.bin", filename);
+    // g_volTexObj = initVol3DTex(input_path, 256, 256, 256);
+	g_volTexObj = initVol3DTex(input_path, 32, 512, 512);
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
 	display();
 
@@ -497,14 +499,14 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	}
 	fclose(fp);
 
-	float data_min = 13.0f;
+	float data_min = 13.6f;
 	float data_max = 0.0f;
 	for (int i = 0; i < size; i++) {
 		if (data[i] < data_min)
 			data_min = data[i];
 		if (data[i] > data_max)
 			data_max = data[i];
-		data[i] /= 12.5f;
+		data[i] /= 13.6f;
 	}
 	cout << "data_min: " << data_min << " data_max: " << data_max << endl;
 
@@ -670,7 +672,7 @@ void display() {
 	
 	FILE* fp;
 	char vp_path[1024];
-	sprintf(vp_path, "/fs/project/PAS0027/nyx_image/train/%s/viewpoints.txt", filename);
+	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/vp5/10.3/image/viewpoints.txt");
 	if (!(fp = fopen(vp_path, "r"))) {
 		cout << "Error: opening viewpoint file failed" << endl;
 		exit(EXIT_FAILURE);
@@ -704,7 +706,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_image/train512/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/vp5/10.3/image/%s/%d.png", filename, idx);
     	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
@@ -733,7 +735,7 @@ void render(GLenum cullFace) {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// create the projection matrix 
-	float fov_r = 30.0f * M_PI / 180.0f;
+	float fov_r = 15.0f * M_PI / 180.0f;
 
 	bool perspective_projection = true;
 	glm::mat4 pMatrix;
@@ -790,7 +792,7 @@ void render(GLenum cullFace) {
 	glm::mat4 model = glm::mat4(1.0f);
 
 	// to make the "head256.raw" i.e. the volume data stand up.
-	model *= glm::scale(glm::vec3(0.6f, 0.6f, 0.6f));
+	model *= glm::scale(glm::vec3(0.3f, 0.3f, 0.3f));
 	// from local space to world space [0, 1]^3 -> [-0.5, 0.5]^3
 	model *= glm::translate(glm::vec3(-0.5f, -0.5f, -0.5f));
 
