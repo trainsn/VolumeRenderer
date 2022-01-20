@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 	char input_path[1024];
 	cout << filename << endl;
 // 	sprintf(input_path, "/fs/project/PAS0027/nyx1/output/%s.bin", filename);
-    sprintf(input_path, "/fs/project/PAS0027/nyx_graph/vp5/10.3/pred/%s.bin", filename);
+    sprintf(input_path, "/fs/project/PAS0027/nyx_graph/vp5/mip/train/%s.bin", filename);
     // sprintf(input_path, "/fs/project/PAS0027/nyx_tnet/vp5/10.3/pred/%s.bin", filename);
     // g_volTexObj = initVol3DTex(input_path, 256, 256, 256);
 	g_volTexObj = initVol3DTex(input_path, 32, 512, 512);
