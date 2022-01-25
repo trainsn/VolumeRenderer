@@ -149,14 +149,14 @@ int main(int argc, char *argv[]) {
 	// render and save
 	initVBO();
 	initShader();
-	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-2.TF1D");
+	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-3.TF1D");
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
 	sprintf(filename, argv[1]);
 	char input_path[1024];
 	cout << filename << endl;
-	sprintf(input_path, "/fs/project/PAS0027/nyx_graph/vp5_256/test_recon/%s.bin", filename);
-	g_volTexObj = initVol3DTex(input_path, 256, 256, 256);
+	sprintf(input_path, "/fs/project/PAS0027/nyx_graph/vp5/train/%s.bin", filename);
+	g_volTexObj = initVol3DTex(input_path, 512, 512, 512);
     // g_volTexObj = initVol3DTex("../res/woodbranch_2048x2048x2048_float32.raw", 2048, 2048, 2048);
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
 	display();
@@ -497,14 +497,14 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	}
 	fclose(fp);
 
-	float data_min = 13.0f;
+	float data_min = 1e14f;
 	float data_max = 0.0f;
 	for (int i = 0; i < size; i++) {
 		if (data[i] < data_min)
 			data_min = data[i];
 		if (data[i] > data_max)
 			data_max = data[i];
-		data[i] /= 12.5f;
+		data[i] /= 3162277660168.3794f;     // 10^12.5 
 	}
 	cout << "data_min: " << data_min << " data_max: " << data_max << endl;
 
@@ -670,7 +670,7 @@ void display() {
 	
 	FILE* fp;
 	char vp_path[1024];
-	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/vp5_256/viewpoints.txt", filename);
+	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/vp5/10.3/image/viewpoints.txt", filename);
 	if (!(fp = fopen(vp_path, "r"))) {
 		cout << "Error: opening viewpoint file failed" << endl;
 		exit(EXIT_FAILURE);
@@ -704,7 +704,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/vp5_256/test_recon/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/vp5/train/%s/%d.png", filename, idx);
     	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
