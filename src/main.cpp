@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 	char input_path[1024];
 	cout << filename << endl;
 // 	sprintf(input_path, "/fs/project/PAS0027/nyx1/output/%s.bin", filename);
-    sprintf(input_path, "/fs/project/PAS0027/nyx_graph/vp5/mip/train/%s.bin", filename);
+    sprintf(input_path, "/fs/project/PAS0027/nyx_graph/vpx/mip/train/%s.bin", filename);
     // sprintf(input_path, "/fs/project/PAS0027/nyx_tnet/vp5/10.3/pred/%s.bin", filename);
     // g_volTexObj = initVol3DTex(input_path, 256, 256, 256);
 	g_volTexObj = initVol3DTex(input_path, 32, 512, 512);
@@ -499,14 +499,14 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	}
 	fclose(fp);
 
-	float data_min = 13.6f;
+	float data_min = 1e14f;
 	float data_max = 0.0f;
 	for (int i = 0; i < size; i++) {
 		if (data[i] < data_min)
 			data_min = data[i];
 		if (data[i] > data_max)
 			data_max = data[i];
-		data[i] /= 13.6f;
+		data[i] /= 39810717055349.695f;     // 10^13.6 
 	}
 	cout << "data_min: " << data_min << " data_max: " << data_max << endl;
 
@@ -672,7 +672,7 @@ void display() {
 	
 	FILE* fp;
 	char vp_path[1024];
-	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/vp5/10.3/image/viewpoints.txt");
+	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/viewpoints.txt");
 	if (!(fp = fopen(vp_path, "r"))) {
 		cout << "Error: opening viewpoint file failed" << endl;
 		exit(EXIT_FAILURE);
@@ -706,7 +706,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/vp5/10.3/image/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/vpx/mip/train/%s/%d.png", filename, idx);
     	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
@@ -737,7 +737,7 @@ void render(GLenum cullFace) {
 	// create the projection matrix 
 	float fov_r = 15.0f * M_PI / 180.0f;
 
-	bool perspective_projection = true;
+	bool perspective_projection = false;
 	glm::mat4 pMatrix;
 	if (perspective_projection) {
 		// Resulting perspective matrix, FOV in radians, aspect ratio, near, and far clipping plane.
