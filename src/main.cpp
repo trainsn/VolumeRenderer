@@ -41,13 +41,9 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-const int dim_x = 512;
-const int dim_y = 512;
-const int dim_z = 512;
 const GLuint g_winWidth = 800;
 const GLuint g_winHeight = 800;
 float theta, phi;
-float weight_x, weight_y, weight_z;
 GLuint g_frameBuffer;
 // transfer function
 GLuint g_tffTexObj;
@@ -96,7 +92,7 @@ void initShader();
 void initFrameBuffer(GLuint, GLuint, GLuint);
 GLuint initTFF1DTex(const char* filename);
 GLuint initFace2DTex(GLuint texWidth, GLuint texHeight);
-float* initVol3DTex(const char* filename, GLuint width, GLuint height, GLuint depth);
+GLuint initVol3DTex(const char* filename, GLuint width, GLuint height, GLuint depth);
 void render(GLenum cullFace);
 const char *get_egl_error_info(EGLint error);
 
@@ -157,7 +153,11 @@ int main(int argc, char *argv[]) {
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
 	sprintf(filename, argv[1]);
+	char input_path[1024];
 	cout << filename << endl;
+	sprintf(input_path, "/fs/project/PAS0027/nyx_graph/test/%s.bin", filename);
+	g_volTexObj = initVol3DTex(input_path, 512, 512, 512);
+    // g_volTexObj = initVol3DTex("../res/woodbranch_2048x2048x2048_float32.raw", 2048, 2048, 2048);
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
 	display();
 
@@ -482,7 +482,7 @@ GLuint initFace2DTex(GLuint bfTexWidth, GLuint bfTexHeight) {
 }
 
 // init 3D texture to store the volume data used fo ray casting
-float* initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
+GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	FILE *fp;
 	long long int size = w * h;
 	size *= d;
@@ -507,8 +507,23 @@ float* initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 		data[i] /= 3162277660168.3794f;     // 10^12.5 
 	}
 	cout << "data_min: " << data_min << " data_max: " << data_max << endl;
-	
-	return data;
+
+	glGenTextures(1, &g_volTexObj);
+	// bind 3D texture target
+	glBindTexture(GL_TEXTURE_3D, g_volTexObj);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+	// pixel transfer happens here from client to OpenGL server
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+// 	cout << "start creating volume texture" << endl;
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_COMPRESSED_RED, w, h, d, 0, GL_RED, GL_FLOAT, data);
+
+	delete[]data;
+// 	cout << "volume texture created" << endl;
+	return g_volTexObj;
 }
 
 void checkFramebufferStatus() {
@@ -653,33 +668,9 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle) {
 void display() {
 	glEnable(GL_DEPTH_TEST);
 	
-	glGenTextures(1, &g_volTexObj);
-    // bind 3D texture target
-    glBindTexture(GL_TEXTURE_3D, g_volTexObj);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
-    // pixel transfer happens here from client to OpenGL server
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	
-	char input_path_x[1024];
-	sprintf(input_path_x, "/fs/project/PAS0027/nyx_graph/vpx/10.3/pred/%s.bin", filename);
-	float* data_x = initVol3DTex(input_path_x, dim_z, dim_y, dim_x);
-	
-	char input_path_y[1024];
-	sprintf(input_path_y, "/fs/project/PAS0027/nyx_graph/vpy/10.3/pred/%s.bin", filename);
-	float* data_y = initVol3DTex(input_path_y, dim_z, dim_y, dim_x);
-	
-	char input_path_z[1024];
-	sprintf(input_path_z, "/fs/project/PAS0027/nyx_graph/vpz/10.3/pred/%s.bin", filename);
-	float* data_z = initVol3DTex(input_path_z, dim_z, dim_y, dim_x);
-	
 	FILE* fp;
 	char vp_path[1024];
-	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/viewpoints_weight.txt", filename);
-// 	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/train/%s/viewpoints.txt", filename);
+	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/viewpoints.txt", filename);
 	if (!(fp = fopen(vp_path, "r"))) {
 		cout << "Error: opening viewpoint file failed" << endl;
 		exit(EXIT_FAILURE);
@@ -687,25 +678,10 @@ void display() {
 	int vpNum;
 	fscanf(fp, "%d", &vpNum);
 	for (int idx = 0; idx < vpNum; idx++){
-		fscanf(fp, "%f%f%f%f%f", &phi, &theta, &weight_x, &weight_y, &weight_z);
-		cout << phi << " " << theta << " ";
+		fscanf(fp, "%f%f", &phi, &theta);
+// 		cout << phi << " " << theta << " ";
 		phi = phi * M_PI / 180.0f;
 		theta = theta * M_PI / 180.0f;
-		
-		float data_min = 1.0f;
-    	float data_max = 0.0f;
-		float* data = new float[dim_x * dim_y * dim_z];
-		for (int i = 0; i < dim_x * dim_y * dim_z; i++){
-		    data[i] = data_x[i] * weight_x + data_y[i] * weight_y + data_z[i] * weight_z;
-		    if (data[i] < data_min)
-    			data_min = data[i];
-    		if (data[i] > data_max)
-    			data_max = data[i];
-		}
-    	cout << "data_min: " << data_min * 3162277660168.3794f  << " data_max: " << data_max * 3162277660168.3794f << endl;
-		
-        // 	cout << "start creating volume texture" << endl;
-    	glTexImage3D(GL_TEXTURE_3D, 0, GL_COMPRESSED_RED, dim_z, dim_y, dim_x, 0, GL_RED, GL_FLOAT, data);
 		
 		// render to texture
     	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_frameBuffer);
@@ -728,7 +704,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/fused/10.3/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/test/%s/%d.png", filename, idx);
     // 	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
@@ -743,7 +719,6 @@ void display() {
     		}
     	}
     	stbi_write_png(imagepath, g_winWidth, g_winHeight, 3, pImage, g_winWidth * 3);
-    	delete[]data;
     	delete pBuffer;
     	delete pImage;
 	}
