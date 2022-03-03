@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 	// render and save
 	initVBO();
 	initShader();
-	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-3.TF1D");
+	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-2.TF1D");
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
 	sprintf(filename, argv[1]);
@@ -704,7 +704,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/test/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/test/tf2/%s/%d.png", filename, idx);
     // 	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
