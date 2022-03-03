@@ -665,15 +665,15 @@ void display() {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	
 	char input_path_x[1024];
-	sprintf(input_path_x, "/fs/project/PAS0027/nyx_graph/vpx/10.3/pred/%s.bin", filename);
+	sprintf(input_path_x, "/fs/project/PAS0027/nyx_graph/vpx/pred/%s.bin", filename);
 	float* data_x = initVol3DTex(input_path_x, dim_z, dim_y, dim_x);
 	
 	char input_path_y[1024];
-	sprintf(input_path_y, "/fs/project/PAS0027/nyx_graph/vpy/10.3/pred/%s.bin", filename);
+	sprintf(input_path_y, "/fs/project/PAS0027/nyx_graph/vpy/pred/%s.bin", filename);
 	float* data_y = initVol3DTex(input_path_y, dim_z, dim_y, dim_x);
 	
 	char input_path_z[1024];
-	sprintf(input_path_z, "/fs/project/PAS0027/nyx_graph/vpz/10.3/pred/%s.bin", filename);
+	sprintf(input_path_z, "/fs/project/PAS0027/nyx_graph/vpz/pred/%s.bin", filename);
 	float* data_z = initVol3DTex(input_path_z, dim_z, dim_y, dim_x);
 	
 	FILE* fp;
@@ -688,7 +688,7 @@ void display() {
 	fscanf(fp, "%d", &vpNum);
 	for (int idx = 0; idx < vpNum; idx++){
 		fscanf(fp, "%f%f%f%f%f", &phi, &theta, &weight_x, &weight_y, &weight_z);
-		cout << phi << " " << theta << " ";
+// 		cout << phi << " " << theta << " ";
 		phi = phi * M_PI / 180.0f;
 		theta = theta * M_PI / 180.0f;
 		
@@ -702,7 +702,7 @@ void display() {
     		if (data[i] > data_max)
     			data_max = data[i];
 		}
-    	cout << "data_min: " << data_min * 3162277660168.3794f  << " data_max: " << data_max * 3162277660168.3794f << endl;
+    // 	cout << "data_min: " << data_min * 3162277660168.3794f  << " data_max: " << data_max * 3162277660168.3794f << endl;
 		
         // 	cout << "start creating volume texture" << endl;
     	glTexImage3D(GL_TEXTURE_3D, 0, GL_COMPRESSED_RED, dim_z, dim_y, dim_x, 0, GL_RED, GL_FLOAT, data);
@@ -728,7 +728,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/fused/10.3/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/fused/%s/%d.png", filename, idx);
     // 	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
