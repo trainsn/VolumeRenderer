@@ -149,14 +149,14 @@ int main(int argc, char *argv[]) {
 	// render and save
 	initVBO();
 	initShader();
-	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-2.TF1D");
+	g_tffTexObj = initTFF1DTex("../res/TF1D/mpas-1.TF1D");
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
 	sprintf(filename, argv[1]);
 	char input_path[1024];
 	cout << filename << endl;
-	sprintf(input_path, "/fs/project/PAS0027/nyx_graph/test/%s.bin", filename);
-	g_volTexObj = initVol3DTex(input_path, 512, 512, 512);
+	sprintf(input_path, "/fs/project/PAS0027/mpas_vdl/train/%s.bin", filename);
+	g_volTexObj = initVol3DTex(input_path, 1536, 768, 768);
     // g_volTexObj = initVol3DTex("../res/woodbranch_2048x2048x2048_float32.raw", 2048, 2048, 2048);
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
 	display();
@@ -504,7 +504,7 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 			data_min = data[i];
 		if (data[i] > data_max)
 			data_max = data[i];
-		data[i] /= 3162277660168.3794f;     // 10^12.5 
+		data[i] = (data[i] - 15.0f) / 15.0f;   
 	}
 	cout << "data_min: " << data_min << " data_max: " << data_max << endl;
 
@@ -670,7 +670,7 @@ void display() {
 	
 	FILE* fp;
 	char vp_path[1024];
-	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/viewpoints.txt", filename);
+	sprintf(vp_path, "/fs/project/PAS0027/mpas_vdl/img/tf1/train/%s/viewpoints.txt", filename);
 	if (!(fp = fopen(vp_path, "r"))) {
 		cout << "Error: opening viewpoint file failed" << endl;
 		exit(EXIT_FAILURE);
@@ -704,7 +704,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/test/tf2/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/mpas_vdl/img/tf1/train/%s/%d.png", filename, idx);
     // 	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
@@ -730,7 +730,7 @@ void display() {
 // together with the frontface, use the backface as a 2D texture in the second pass
 // to calculate the entry point and the exit point of the ray in and out the box.
 void render(GLenum cullFace) {
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// create the projection matrix 
 	float fov_r = 30.0f * M_PI / 180.0f;
@@ -790,7 +790,7 @@ void render(GLenum cullFace) {
 	glm::mat4 model = glm::mat4(1.0f);
 
 	// to make the "head256.raw" i.e. the volume data stand up.
-	model *= glm::scale(glm::vec3(0.6f, 0.6f, 0.6f));
+	model *= glm::scale(glm::vec3(0.84f, 0.42f, 0.42f));
 	// from local space to world space [0, 1]^3 -> [-0.5, 0.5]^3
 	model *= glm::translate(glm::vec3(-0.5f, -0.5f, -0.5f));
 

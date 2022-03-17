@@ -33,7 +33,7 @@ void main()
     vec3 deltaDir = normalize(dir) * StepSize;
     vec4 colorAcum = vec4(0.0); // The dest color
     // backgroundColor
-    vec4 bgColor = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 bgColor = vec4(1.0, 1.0, 1.0, 1.0);
 
 	int steps = int(len / StepSize);
   
