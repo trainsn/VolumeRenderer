@@ -41,14 +41,18 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
+const int dim_depth = 768;
+const int dim_lat = 768;
+const int dim_lon = 1536;
 const GLuint g_winWidth = 800;
 const GLuint g_winHeight = 800;
 float theta, phi;
+float weight_lon, weight_lat, weight_depth;
 GLuint g_frameBuffer;
 // transfer function
 GLuint g_tffTexObj;
 GLuint g_bfTexObj;
-GLuint g_volTexObj;
+GLuint g_volTexObj[3];
 GLuint g_rcVertHandle;
 GLuint g_rcFragHandle;
 GLuint g_bfVertHandle;
@@ -92,7 +96,7 @@ void initShader();
 void initFrameBuffer(GLuint, GLuint, GLuint);
 GLuint initTFF1DTex(const char* filename);
 GLuint initFace2DTex(GLuint texWidth, GLuint texHeight);
-GLuint initVol3DTex(const char* filename, GLuint width, GLuint height, GLuint depth);
+GLuint initVol3DTex(const char* filename, GLuint width, GLuint height, GLuint depth, int idx);
 void render(GLenum cullFace);
 const char *get_egl_error_info(EGLint error);
 
@@ -149,16 +153,26 @@ int main(int argc, char *argv[]) {
 	// render and save
 	initVBO();
 	initShader();
-	g_tffTexObj = initTFF1DTex("../res/TF1D/mpas-1.TF1D");
+	g_tffTexObj = initTFF1DTex("../res/TF1D/mpas-0.TF1D");
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
 	sprintf(filename, argv[1]);
-	char input_path[1024];
 	cout << filename << endl;
-	sprintf(input_path, "/fs/project/PAS0027/mpas_vdl/train/%s.bin", filename);
-	g_volTexObj = initVol3DTex(input_path, 1536, 768, 768);
-    // g_volTexObj = initVol3DTex("../res/woodbranch_2048x2048x2048_float32.raw", 2048, 2048, 2048);
+	
+	char input_path_lon[1024];
+	sprintf(input_path_lon, "/fs/project/PAS0027/mpas_vdl/vplon/pred/%s.bin", filename);
+	g_volTexObj[0] = initVol3DTex(input_path_lon, dim_lon, dim_lat / 2, dim_depth / 2, 0);
+	
+	char input_path_lat[1024];
+    sprintf(input_path_lat, "/fs/project/PAS0027/mpas_vdl/vplat/pred/%s.bin", filename);
+    g_volTexObj[1] = initVol3DTex(input_path_lat, dim_lon / 2, dim_lat, dim_depth / 2, 1);
+	
+    char input_path_depth[1024];
+    sprintf(input_path_depth, "/fs/project/PAS0027/mpas_vdl/vpdepth/pred/%s.bin", filename);
+    g_volTexObj[2] = initVol3DTex(input_path_depth, dim_lon / 2, dim_lat / 2, dim_depth, 2);
+	
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
+	
 	display();
 
 	// 6. Terminate EGL when finished
@@ -482,7 +496,7 @@ GLuint initFace2DTex(GLuint bfTexWidth, GLuint bfTexHeight) {
 }
 
 // init 3D texture to store the volume data used fo ray casting
-GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
+GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d, int idx) {
 	FILE *fp;
 	long long int size = w * h;
 	size *= d;
@@ -508,9 +522,9 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	}
 	cout << "data_min: " << data_min << " data_max: " << data_max << endl;
 
-	glGenTextures(1, &g_volTexObj);
+	glGenTextures(1, &(g_volTexObj[idx]));
 	// bind 3D texture target
-	glBindTexture(GL_TEXTURE_3D, g_volTexObj);
+	glBindTexture(GL_TEXTURE_3D, g_volTexObj[idx]);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -523,7 +537,7 @@ GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 
 	delete[]data;
 // 	cout << "volume texture created" << endl;
-	return g_volTexObj;
+	return g_volTexObj[idx];
 }
 
 void checkFramebufferStatus() {
@@ -598,14 +612,45 @@ void rcSetUinforms() {
 			<< "is not bind to the uniform"
 			<< endl;
 	}
-	GLint volumeLoc = glGetUniformLocation(g_programHandle, "VolumeTex");
-	if (volumeLoc >= 0) {
+	GLint volumeLocLon = glGetUniformLocation(g_programHandle, "VolumeTexLon");
+	if (volumeLocLon >= 0) {
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_3D, g_volTexObj);
-		glUniform1i(volumeLoc, 2);
+		glBindTexture(GL_TEXTURE_3D, g_volTexObj[0]);
+		glUniform1i(volumeLocLon, 2);
 	}
 	else {
-		cout << "VolumeTex"
+		cout << "VolumeTexLon "
+			<< "is not bind to the uniform"
+			<< endl;
+	}
+	GLint volumeLocLat = glGetUniformLocation(g_programHandle, "VolumeTexLat");
+	if (volumeLocLat >= 0) {
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_3D, g_volTexObj[1]);
+		glUniform1i(volumeLocLat, 3);
+	}
+	else {
+		cout << "VolumeTexLat "
+			<< "is not bind to the uniform"
+			<< endl;
+	}
+	GLint volumeLocDepth = glGetUniformLocation(g_programHandle, "VolumeTexDepth");
+	if (volumeLocDepth >= 0) {
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_3D, g_volTexObj[2]);
+		glUniform1i(volumeLocDepth, 4);
+	}
+	else {
+		cout << "VolumeTexDepth "
+			<< "is not bind to the uniform"
+			<< endl;
+	}
+	GLint weightLoc = glGetUniformLocation(g_programHandle, "weight");
+	if (weightLoc >= 0) {
+		glUniform3f(weightLoc, weight_lon, weight_lat, weight_depth);
+	}
+	else {
+		cout << "weight "
 			<< "is not bind to the uniform"
 			<< endl;
 	}
@@ -670,7 +715,7 @@ void display() {
 	
 	FILE* fp;
 	char vp_path[1024];
-	sprintf(vp_path, "/fs/project/PAS0027/mpas_vdl/img/tf1/train/%s/viewpoints.txt", filename);
+	sprintf(vp_path, "/fs/project/PAS0027/mpas_vdl/viewpoints_weight.txt", filename);
 	if (!(fp = fopen(vp_path, "r"))) {
 		cout << "Error: opening viewpoint file failed" << endl;
 		exit(EXIT_FAILURE);
@@ -678,7 +723,7 @@ void display() {
 	int vpNum;
 	fscanf(fp, "%d", &vpNum);
 	for (int idx = 0; idx < vpNum; idx++){
-		fscanf(fp, "%f%f", &phi, &theta);
+		fscanf(fp, "%f%f%f%f%f", &phi, &theta, &weight_lon, &weight_lat, &weight_depth);
 // 		cout << phi << " " << theta << " ";
 		phi = phi * M_PI / 180.0f;
 		theta = theta * M_PI / 180.0f;
@@ -704,7 +749,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/mpas_vdl/img/tf1/train/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/mpas_vdl/img/tf0/fused/%s/%d.png", filename, idx);
     // 	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
