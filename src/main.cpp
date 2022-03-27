@@ -41,18 +41,17 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-const int dim_x = 512;
-const int dim_y = 512;
-const int dim_z = 512;
-const GLuint g_winWidth = 800;
-const GLuint g_winHeight = 800;
+const int dim_data = 512;
+const int dim_img = 384;
+const GLuint g_winWidth = 600;
+const GLuint g_winHeight = 600;
 float theta, phi;
 float weight_x, weight_y, weight_z;
 GLuint g_frameBuffer;
 // transfer function
 GLuint g_tffTexObj;
 GLuint g_bfTexObj;
-GLuint g_volTexObj;
+GLuint g_volTexObj[3];
 GLuint g_rcVertHandle;
 GLuint g_rcFragHandle;
 GLuint g_bfVertHandle;
@@ -96,7 +95,7 @@ void initShader();
 void initFrameBuffer(GLuint, GLuint, GLuint);
 GLuint initTFF1DTex(const char* filename);
 GLuint initFace2DTex(GLuint texWidth, GLuint texHeight);
-float* initVol3DTex(const char* filename, GLuint width, GLuint height, GLuint depth);
+GLuint initVol3DTex(const char* filename, GLuint width, GLuint height, GLuint depth, int idx);
 void render(GLenum cullFace);
 const char *get_egl_error_info(EGLint error);
 
@@ -158,6 +157,19 @@ int main(int argc, char *argv[]) {
 	
 	sprintf(filename, argv[1]);
 	cout << filename << endl;
+	
+	char input_path_x[1024];
+	sprintf(input_path_x, "/fs/project/PAS0027/nyx_vdl/512/vpx/pred/%s.bin", filename);
+	g_volTexObj[0] = initVol3DTex(input_path_x, dim_data, dim_img, dim_img, 0);
+	
+	char input_path_y[1024];
+	sprintf(input_path_y, "/fs/project/PAS0027/nyx_vdl/512/vpy/pred/%s.bin", filename);
+	g_volTexObj[1] = initVol3DTex(input_path_y, dim_img, dim_data, dim_img, 1);
+	
+	char input_path_z[1024];
+	sprintf(input_path_z, "/fs/project/PAS0027/nyx_vdl/512/vpz/pred/%s.bin", filename);
+	g_volTexObj[2] = initVol3DTex(input_path_z, dim_img, dim_img, dim_data, 2);
+	
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
 	display();
 
@@ -482,7 +494,7 @@ GLuint initFace2DTex(GLuint bfTexWidth, GLuint bfTexHeight) {
 }
 
 // init 3D texture to store the volume data used fo ray casting
-float* initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
+GLuint initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d, int idx) {
 	FILE *fp;
 	long long int size = w * h;
 	size *= d;
@@ -508,7 +520,22 @@ float* initVol3DTex(const char* filename, GLuint w, GLuint h, GLuint d) {
 	}
 	cout << "data_min: " << data_min << " data_max: " << data_max << endl;
 	
-	return data;
+	glGenTextures(1, &(g_volTexObj[idx]));
+    // bind 3D texture target
+    glBindTexture(GL_TEXTURE_3D, g_volTexObj[idx]);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+    // pixel transfer happens here from client to OpenGL server
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // 	cout << "start creating volume texture" << endl;
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_COMPRESSED_RED, w, h, d, 0, GL_RED, GL_FLOAT, data);
+	
+	delete[]data;
+// 	cout << "volume texture created" << endl;
+	return g_volTexObj[idx];
 }
 
 void checkFramebufferStatus() {
@@ -583,14 +610,45 @@ void rcSetUinforms() {
 			<< "is not bind to the uniform"
 			<< endl;
 	}
-	GLint volumeLoc = glGetUniformLocation(g_programHandle, "VolumeTex");
-	if (volumeLoc >= 0) {
+	GLint volumeLocX = glGetUniformLocation(g_programHandle, "VolumeTexX");
+	if (volumeLocX >= 0) {
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_3D, g_volTexObj);
-		glUniform1i(volumeLoc, 2);
+		glBindTexture(GL_TEXTURE_3D, g_volTexObj[0]);
+		glUniform1i(volumeLocX, 2);
 	}
 	else {
-		cout << "VolumeTex"
+		cout << "VolumeTexX "
+			<< "is not bind to the uniform"
+			<< endl;
+	}
+	GLint VolumeLocY = glGetUniformLocation(g_programHandle, "VolumeTexY");
+	if (volumeLocX >= 0) {
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_3D, g_volTexObj[1]);
+		glUniform1i(VolumeLocY, 3);
+	}
+	else {
+		cout << "VolumeTexY "
+			<< "is not bind to the uniform"
+			<< endl;
+	}
+	GLint volumeLocZ = glGetUniformLocation(g_programHandle, "VolumeTexZ");
+	if (volumeLocZ >= 0) {
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_3D, g_volTexObj[2]);
+		glUniform1i(volumeLocZ, 4);
+	}
+	else {
+		cout << "VolumeTexZ "
+			<< "is not bind to the uniform"
+			<< endl;
+	}
+	GLint weightLoc = glGetUniformLocation(g_programHandle, "weight");
+	if (weightLoc >= 0) {
+		glUniform3f(weightLoc, weight_x, weight_y, weight_z);
+	}
+	else {
+		cout << "weight "
 			<< "is not bind to the uniform"
 			<< endl;
 	}
@@ -653,33 +711,10 @@ void linkShader(GLuint shaderPgm, GLuint newVertHandle, GLuint newFragHandle) {
 void display() {
 	glEnable(GL_DEPTH_TEST);
 	
-	glGenTextures(1, &g_volTexObj);
-    // bind 3D texture target
-    glBindTexture(GL_TEXTURE_3D, g_volTexObj);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
-    // pixel transfer happens here from client to OpenGL server
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	
-	char input_path_x[1024];
-	sprintf(input_path_x, "/fs/project/PAS0027/nyx_graph/vpx/pred/%s.bin", filename);
-	float* data_x = initVol3DTex(input_path_x, dim_z, dim_y, dim_x);
-	
-	char input_path_y[1024];
-	sprintf(input_path_y, "/fs/project/PAS0027/nyx_graph/vpy/pred/%s.bin", filename);
-	float* data_y = initVol3DTex(input_path_y, dim_z, dim_y, dim_x);
-	
-	char input_path_z[1024];
-	sprintf(input_path_z, "/fs/project/PAS0027/nyx_graph/vpz/pred/%s.bin", filename);
-	float* data_z = initVol3DTex(input_path_z, dim_z, dim_y, dim_x);
-	
 	FILE* fp;
 	char vp_path[1024];
-	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/viewpoints_weight.txt", filename);
-// 	sprintf(vp_path, "/fs/project/PAS0027/nyx_graph/train/%s/viewpoints.txt", filename);
+	sprintf(vp_path, "/fs/project/PAS0027/nyx_vdl/viewpoints_weight.txt", filename);
+// 	sprintf(vp_path, "/fs/project/PAS0027/nyx_vdl/train/%s/viewpoints.txt", filename);
 	if (!(fp = fopen(vp_path, "r"))) {
 		cout << "Error: opening viewpoint file failed" << endl;
 		exit(EXIT_FAILURE);
@@ -691,21 +726,6 @@ void display() {
 // 		cout << phi << " " << theta << " ";
 		phi = phi * M_PI / 180.0f;
 		theta = theta * M_PI / 180.0f;
-		
-		float data_min = 1.0f;
-    	float data_max = 0.0f;
-		float* data = new float[dim_x * dim_y * dim_z];
-		for (int i = 0; i < dim_x * dim_y * dim_z; i++){
-		    data[i] = data_x[i] * weight_x + data_y[i] * weight_y + data_z[i] * weight_z;
-		    if (data[i] < data_min)
-    			data_min = data[i];
-    		if (data[i] > data_max)
-    			data_max = data[i];
-		}
-    // 	cout << "data_min: " << data_min * 3162277660168.3794f  << " data_max: " << data_max * 3162277660168.3794f << endl;
-		
-        // 	cout << "start creating volume texture" << endl;
-    	glTexImage3D(GL_TEXTURE_3D, 0, GL_COMPRESSED_RED, dim_z, dim_y, dim_x, 0, GL_RED, GL_FLOAT, data);
 		
 		// render to texture
     	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, g_frameBuffer);
@@ -728,7 +748,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_graph/fused/tf2/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_vdl/512/img/tf2/fused/%s/%d.png", filename, idx);
     // 	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
@@ -743,7 +763,6 @@ void display() {
     		}
     	}
     	stbi_write_png(imagepath, g_winWidth, g_winHeight, 3, pImage, g_winWidth * 3);
-    	delete[]data;
     	delete pBuffer;
     	delete pImage;
 	}

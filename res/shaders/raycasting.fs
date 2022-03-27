@@ -6,10 +6,13 @@ in vec3 EntryPoint;
 in vec4 ExitPointCoord;
 
 uniform sampler2D ExitPoints;
-uniform sampler3D VolumeTex;
+uniform sampler3D VolumeTexX;
+uniform sampler3D VolumeTexY;
+uniform sampler3D VolumeTexZ;
 uniform sampler1D TransferFunc;  
 uniform float     StepSize;
 uniform vec2      ScreenSize;
+uniform vec3      weight;
 layout (location = 0) out vec4 FragColor;
 
 void main()
@@ -41,7 +44,10 @@ void main()
     {
         // 获得体数据中的标量值scaler value
 		vec3 voxelCoord = EntryPoint + deltaDir * i;
-        float intensity =  texture(VolumeTex, voxelCoord * 1.0f).x;
+        float intensity_x =  texture(VolumeTexX, voxelCoord * 1.0f).x;
+        float intensity_y =  texture(VolumeTexY, voxelCoord * 1.0f).x;
+        float intensity_z =  texture(VolumeTexZ, voxelCoord * 1.0f).x;
+        float intensity = intensity_x * weight[0] + intensity_y * weight[1] + intensity_z * weight[2];
 
         // 查找传输函数中映射后的值
         // 依赖性纹理读取  
