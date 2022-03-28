@@ -41,8 +41,8 @@ using glm::mat4;
 using glm::vec3;
 GLuint g_vao;
 GLuint g_programHandle;
-const GLuint g_winWidth = 800;
-const GLuint g_winHeight = 800;
+const GLuint g_winWidth = 600;
+const GLuint g_winHeight = 600;
 float theta, phi;
 GLuint g_frameBuffer;
 // transfer function
@@ -149,14 +149,14 @@ int main(int argc, char *argv[]) {
 	// render and save
 	initVBO();
 	initShader();
-	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-2.TF1D");
+	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-3.TF1D");
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
 	sprintf(filename, argv[1]);
 	char input_path[1024];
 	cout << filename << endl;
-	sprintf(input_path, "/fs/project/PAS0027/nyx_vdl/1024/train/%s.bin", filename);
-	g_volTexObj = initVol3DTex(input_path, 1024, 1024, 1024);
+	sprintf(input_path, "/fs/project/PAS0027/nyx_vdl/512/pred/%s.bin", filename);
+	g_volTexObj = initVol3DTex(input_path, 512, 512, 512);
     // g_volTexObj = initVol3DTex("../res/woodbranch_2048x2048x2048_float32.raw", 2048, 2048, 2048);
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
 	display();
@@ -670,7 +670,7 @@ void display() {
 	
 	FILE* fp;
 	char vp_path[1024];
-	sprintf(vp_path, "/fs/project/PAS0027/nyx_vdl/1024/img/tf2/train/%s/viewpoints.txt", filename);
+	sprintf(vp_path, "/fs/project/PAS0027/nyx_vdl/viewpoints.txt", filename);
 	if (!(fp = fopen(vp_path, "r"))) {
 		cout << "Error: opening viewpoint file failed" << endl;
 		exit(EXIT_FAILURE);
@@ -704,7 +704,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_vdl/1024/img/tf2/train/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_vdl/512/img/tf3/pred/%s/%d.png", filename, idx);
     // 	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
