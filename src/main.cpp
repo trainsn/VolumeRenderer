@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 	sprintf(filename, argv[1]);
 	char input_path[1024];
 	cout << filename << endl;
-	sprintf(input_path, "/fs/project/PAS0027/mpas_vdl/train/%s.bin", filename);
+	sprintf(input_path, "/fs/project/PAS0027/mpas_vdl/test_recon/%s.bin", filename);
 	g_volTexObj = initVol3DTex(input_path, 1536, 768, 768);
     // g_volTexObj = initVol3DTex("../res/woodbranch_2048x2048x2048_float32.raw", 2048, 2048, 2048);
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
@@ -670,7 +670,7 @@ void display() {
 	
 	FILE* fp;
 	char vp_path[1024];
-	sprintf(vp_path, "/fs/project/PAS0027/mpas_vdl/img/tf1/train/%s/viewpoints.txt", filename);
+	sprintf(vp_path, "/fs/project/PAS0027/mpas_vdl/viewpoints.txt", filename);
 	if (!(fp = fopen(vp_path, "r"))) {
 		cout << "Error: opening viewpoint file failed" << endl;
 		exit(EXIT_FAILURE);
@@ -704,7 +704,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/mpas_vdl/img/tf1/train/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/mpas_vdl/img/tf1/test_recon/%s/%d.png", filename, idx);
     // 	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
