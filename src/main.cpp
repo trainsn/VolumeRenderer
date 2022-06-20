@@ -59,6 +59,8 @@ GLuint g_bfFragHandle;
 float g_stepSize = 0.001f;
 
 char filename[1024];
+char tf1d_filename[1024];
+char tfid[1024];
 
 constexpr int opengl_version[] = { 3, 3 };
 
@@ -152,7 +154,9 @@ int main(int argc, char *argv[]) {
 	// render and save
 	initVBO();
 	initShader();
-	g_tffTexObj = initTFF1DTex("../res/TF1D/nyx-2.TF1D");
+	sprintf(tfid, "%s", argv[2]);
+	sprintf(tf1d_filename, "../res/TF1D/nyx-%s.TF1D", tfid);
+	g_tffTexObj = initTFF1DTex(tf1d_filename);
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
 	sprintf(filename, argv[1]);
@@ -748,7 +752,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/nyx_vdl/512/img/tf2/fused/%s/%d.png", filename, idx);
+    	sprintf(imagepath, "/fs/project/PAS0027/nyx_vdl/512/img/tf%s/fused/%s/%d.png", tfid, filename, idx);
     // 	cout << "output " << idx << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
