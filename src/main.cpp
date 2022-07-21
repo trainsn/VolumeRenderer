@@ -59,6 +59,7 @@ GLuint g_bfVertHandle;
 GLuint g_bfFragHandle;
 float g_stepSize = 0.001f;
 
+char root[1024];
 char filename[1024];
 char tf1d_filename[1024];
 char tfid[1024];
@@ -155,24 +156,25 @@ int main(int argc, char *argv[]) {
 	// render and save
 	initVBO();
 	initShader();
-	sprintf(tfid, "%s", argv[2]);
+	sprintf(tfid, "%s", argv[3]);
 	sprintf(tf1d_filename, "../res/TF1D/mpas-%s.TF1D", tfid);
 	g_tffTexObj = initTFF1DTex(tf1d_filename);
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
-	sprintf(filename, argv[1]);
+	sprintf(root, argv[1]);
+	sprintf(filename, argv[2]);
 	cout << filename << endl;
 	
 	char input_path_lon[1024];
-	sprintf(input_path_lon, "/fs/project/PAS0027/mpas_vdl/vplon/pred/%s.bin", filename);
+	sprintf(input_path_lon, "%s/vplon/pred/%s.bin", root, filename);
 	g_volTexObj[0] = initVol3DTex(input_path_lon, dim_lon, dim_lat / 2, dim_depth / 2, 0);
 	
 	char input_path_lat[1024];
-    sprintf(input_path_lat, "/fs/project/PAS0027/mpas_vdl/vplat/pred/%s.bin", filename);
+    sprintf(input_path_lat, "%s/vplat/pred/%s.bin", root, filename);
     g_volTexObj[1] = initVol3DTex(input_path_lat, dim_lon / 2, dim_lat, dim_depth / 2, 1);
 	
     char input_path_depth[1024];
-    sprintf(input_path_depth, "/fs/project/PAS0027/mpas_vdl/vpdepth/pred/%s.bin", filename);
+    sprintf(input_path_depth, "%s/vpdepth/pred/%s.bin", root, filename);
     g_volTexObj[2] = initVol3DTex(input_path_depth, dim_lon / 2, dim_lat / 2, dim_depth, 2);
 	
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
@@ -753,7 +755,7 @@ void display() {
     
     	stbi_flip_vertically_on_write(1);
     	char imagepath[1024];
-    	sprintf(imagepath, "/fs/project/PAS0027/mpas_vdl/img/tf%s/fused/%s/%d.png", tfid, filename, idx);
+    	sprintf(imagepath, "%s/img/tf%s/fused/%s/%d.png", root, tfid, filename, idx);
     // 	cout << "output " << imagepath << ".png" << endl; 
     	float* pBuffer = new float[g_winWidth * g_winHeight * 4];
     	unsigned char* pImage = new unsigned char[g_winWidth * g_winHeight * 3];
