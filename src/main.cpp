@@ -58,6 +58,8 @@ GLuint g_bfVertHandle;
 GLuint g_bfFragHandle;
 float g_stepSize = 0.001f;
 
+char root[1024];
+char foldername[1024];
 char filename[1024];
 char tf1d_filename[1024];
 char tfid[1024];
@@ -154,24 +156,25 @@ int main(int argc, char *argv[]) {
 	// render and save
 	initVBO();
 	initShader();
-	sprintf(tfid, "%s", argv[2]);
+	sprintf(tfid, "%s", argv[3]);
 	sprintf(tf1d_filename, "../res/TF1D/nyx-%s.TF1D", tfid);
 	g_tffTexObj = initTFF1DTex(tf1d_filename);
 	g_bfTexObj = initFace2DTex(g_winWidth, g_winHeight);
 	
-	sprintf(filename, argv[1]);
+	sprintf(root, argv[1]);
+	sprintf(filename, argv[2]);
 	cout << filename << endl;
 	
 	char input_path_x[1024];
-	sprintf(input_path_x, "/fs/project/PAS0027/nyx_vdl/512/vpx/pred/%s.bin", filename);
+	sprintf(input_path_x, "%s/vpx/pred/%s.bin", root, filename);
 	g_volTexObj[0] = initVol3DTex(input_path_x, dim_data, dim_img, dim_img, 0);
 	
 	char input_path_y[1024];
-	sprintf(input_path_y, "/fs/project/PAS0027/nyx_vdl/512/vpy/pred/%s.bin", filename);
+	sprintf(input_path_y, "%s/vpy/pred/%s.bin", root, filename);
 	g_volTexObj[1] = initVol3DTex(input_path_y, dim_img, dim_data, dim_img, 1);
 	
 	char input_path_z[1024];
-	sprintf(input_path_z, "/fs/project/PAS0027/nyx_vdl/512/vpz/pred/%s.bin", filename);
+	sprintf(input_path_z, "%s/vpz/pred/%s.bin", root, filename);
 	g_volTexObj[2] = initVol3DTex(input_path_z, dim_img, dim_img, dim_data, 2);
 	
 	initFrameBuffer(g_bfTexObj, g_winWidth, g_winHeight);
